@@ -1,16 +1,16 @@
-import { useState } from "react";
 import "./App.css";
-import { HStack } from "@chakra-ui/react";
-import { Button } from "@/components/ui/button";
+import { Routes, Route } from "react-router";
+import { Login } from "./components/page/login/Login";
+import { Home } from "./components/page/home/Home";
+import { MyPage } from "./components/page/mypage/MyPage";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <HStack>
-      <Button>Click me!</Button>
-      <Button>Click me</Button>
-    </HStack>
+    <Routes>
+      <Route path="login" element={<Login />} />
+      <Route path="home" element={<Home />} />
+      <Route path="mypage" element={<MyPage />} />
+    </Routes>
   );
 }
 
