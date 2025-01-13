@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/chakraui/button";
 import { useColorMode } from "@/components/ui/chakraui/color-mode";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Box, HStack } from "@chakra-ui/react";
+import { ChatContent } from "@/components/layout/ChatContent";
 
 export const Home = () => {
   const { toggleColorMode } = useColorMode();
@@ -13,10 +15,11 @@ export const Home = () => {
   ];
 
   return (
-    <div>
+    <Box display={"flex"} h={"100%"}>
       <Sidebar chats={mockArray} onClick={(id) => console.log(id)} />
+      <ChatContent onClick={(value) => console.log(value)} />
       {/* Home
       <Button onClick={toggleColorMode}>Toggle Mode</Button> */}
-    </div>
+    </Box>
   );
 };

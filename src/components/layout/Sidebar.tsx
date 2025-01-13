@@ -14,15 +14,7 @@ type SidebarProps = {
 
 export const Sidebar = ({ chats, onClick }: SidebarProps) => {
   return (
-    <Box
-      as="nav"
-      position="fixed"
-      left={0}
-      h={"100%"}
-      w={"1/5"}
-      bg={"gray.100"}
-      px={3}
-    >
+    <Box as="nav" h={"100%"} w={"1/5"} bg={"gray.100"} px={3}>
       <Logo />
       <VStack gap={1} alignItems={"start"} mt={4}>
         {chats.map(({ id, date, title }) => (
