@@ -1,20 +1,22 @@
 import { Box, Button, Input, VStack } from "@chakra-ui/react";
 import { useRef, useState } from "react";
-import { InputGroup } from "../ui/chakraui/input-group";
-import { Field } from "../ui/chakraui/field";
+import { InputGroup } from "../../ui/chakraui/input-group";
+import { Field } from "../../ui/chakraui/field";
 import { LuSearch } from "react-icons/lu";
 import { IoSend } from "react-icons/io5";
 import {
   FileUploadDropzone,
   FileUploadList,
   FileUploadRoot,
-} from "../ui/chakraui/file-upload";
+} from "../../ui/chakraui/file-upload";
+import { ChatContentHeader } from "./ChatContentHeader";
 
 type ChatContentProps = {
+  isFirst?: boolean;
   onClick: (value: string) => void;
 };
 
-export const ChatContent = ({ onClick }: ChatContentProps) => {
+export const ChatContent = ({ isFirst, onClick }: ChatContentProps) => {
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
   const handleClick = (value?: string) => {
@@ -38,7 +40,8 @@ export const ChatContent = ({ onClick }: ChatContentProps) => {
         gap={8}
         justifyContent={"space-between"}
       >
-        <Box flex={1} overflow={"auto"}>
+        <ChatContentHeader name="Sage Adebayo" />
+        <Box flex={1} overflow={"auto"} display={"flex"} alignItems={"center"}>
           <FileUploadRoot
             maxW="xl"
             alignItems="stretch"

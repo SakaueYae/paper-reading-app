@@ -1,8 +1,7 @@
-import { Button } from "@/components/ui/chakraui/button";
 import { useColorMode } from "@/components/ui/chakraui/color-mode";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Box, HStack } from "@chakra-ui/react";
-import { ChatContent } from "@/components/layout/ChatContent";
+import { Box } from "@chakra-ui/react";
+import { ChatContent } from "@/components/layout/ChatContent/ChatContent";
 
 export const Home = () => {
   const { toggleColorMode } = useColorMode();
