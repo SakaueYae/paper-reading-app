@@ -1,7 +1,7 @@
 import { useColorMode } from "@/components/ui/chakraui/color-mode";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Box } from "@chakra-ui/react";
-import { ChatContent } from "@/components/layout/ChatContent/ChatContent";
+import { Chat } from "@/components/layout/Chat/Chat";
 
 export const Home = () => {
   const { toggleColorMode } = useColorMode();
@@ -16,7 +16,7 @@ export const Home = () => {
   return (
     <Box display={"flex"} h={"100%"}>
       <Sidebar chats={mockArray} onClick={(id) => console.log(id)} />
-      <ChatContent onClick={(value) => console.log(value)} />
+      <Chat onClick={(value) => console.log(value)} />
       {/* Home
       <Button onClick={toggleColorMode}>Toggle Mode</Button> */}
     </Box>

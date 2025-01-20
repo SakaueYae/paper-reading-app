@@ -1,4 +1,4 @@
-import { Box, Button, Input, VStack } from "@chakra-ui/react";
+import { Box, Button, Input } from "@chakra-ui/react";
 import { useRef, useState } from "react";
 import { InputGroup } from "../../ui/chakraui/input-group";
 import { Field } from "../../ui/chakraui/field";
@@ -9,14 +9,15 @@ import {
   FileUploadList,
   FileUploadRoot,
 } from "../../ui/chakraui/file-upload";
-import { ChatContentHeader } from "./ChatContentHeader";
+import { ChatHeader } from "./ChatHeader";
+import { ChatContent } from "./ChatContent";
 
-type ChatContentProps = {
+type ChatProps = {
   isFirst?: boolean;
   onClick: (value: string) => void;
 };
 
-export const ChatContent = ({ isFirst, onClick }: ChatContentProps) => {
+export const Chat = ({ isFirst, onClick }: ChatProps) => {
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
   const handleClick = (value?: string) => {
@@ -40,21 +41,48 @@ export const ChatContent = ({ isFirst, onClick }: ChatContentProps) => {
         gap={8}
         justifyContent={"space-between"}
       >
-        <ChatContentHeader name="Sage Adebayo" />
-        <Box flex={1} overflow={"auto"} display={"flex"} alignItems={"center"}>
-          <FileUploadRoot
-            maxW="xl"
-            alignItems="stretch"
-            maxFiles={10}
-            m={"auto"}
+        <ChatHeader name="Sage Adebayo" />
+
+        {isFirst ? (
+          <Box
+            flex={1}
+            overflow={"auto"}
+            display={"flex"}
+            alignItems={"center"}
           >
-            <FileUploadDropzone
-              label="Drag and drop here to upload"
-              description=".png, .jpg up to 5MB"
-            />
-            <FileUploadList />
-          </FileUploadRoot>
-        </Box>
+            <FileUploadRoot
+              maxW="xl"
+              alignItems="stretch"
+              maxFiles={10}
+              m={"auto"}
+            >
+              <FileUploadDropzone
+                label="Drag and drop here to upload"
+                description=".png, .jpg up to 5MB"
+              />
+              <FileUploadList />
+            </FileUploadRoot>
+          </Box>
+        ) : (
+          <ChatContent
+            name="Sage Adebayo"
+            sentMessage={{
+              id: "about hiragana",
+              message: "aiueo",
+            }}
+            contents={[
+              {
+                id: "about hiragana",
+                message: "aiueo",
+              },
+              {
+                id: "about hiragana",
+                message: "kakikukeko",
+              },
+            ]}
+          />
+        )}
+
         <Field invalid={isError} errorText={"テキストを入力してください。"}>
           <InputGroup
             startElement={<LuSearch />}
