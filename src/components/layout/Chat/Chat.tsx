@@ -64,23 +64,25 @@ export const Chat = ({ isFirst, onClick }: ChatProps) => {
             </FileUploadRoot>
           </Box>
         ) : (
-          <ChatContent
-            name="Sage Adebayo"
-            sentMessage={{
-              id: "about hiragana",
-              message: "aiueo",
-            }}
-            contents={[
-              {
+          <Box flex={1} overflow={"auto"}>
+            <ChatContent
+              name="Sage Adebayo"
+              sentMessage={{
                 id: "about hiragana",
                 message: "aiueo",
-              },
-              {
-                id: "about hiragana",
-                message: "kakikukeko",
-              },
-            ]}
-          />
+              }}
+              contents={[
+                {
+                  id: "about hiragana",
+                  message: "aiueo",
+                },
+                {
+                  id: "about hiragana",
+                  message: "kakikukeko",
+                },
+              ]}
+            />
+          </Box>
         )}
 
         <Field invalid={isError} errorText={"テキストを入力してください。"}>
