@@ -15,9 +15,10 @@ import { ChatContent } from "./ChatContent";
 type ChatProps = {
   isFirst?: boolean;
   onClick: (value: string) => void;
+  onFileUpload: (file: File) => void;
 };
 
-export const Chat = ({ isFirst, onClick }: ChatProps) => {
+export const Chat = ({ isFirst, onClick, onFileUpload }: ChatProps) => {
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
   const handleClick = (value?: string) => {
@@ -55,6 +56,7 @@ export const Chat = ({ isFirst, onClick }: ChatProps) => {
               alignItems="stretch"
               maxFiles={10}
               m={"auto"}
+              onFileAccept={(details) => onFileUpload(details.files[0])}
             >
               <FileUploadDropzone
                 label="Drag and drop here to upload"
