@@ -28,52 +28,37 @@ def get_data():
 def upload_pdf():
     if not request.files:
         return "No file part", 400
-    fullHtml = ""
     for key, file in request.files.items():
         if file.filename == "":
             return "No selected file", 400
-        pdf = pymupdf.open(stream=file.read(), filetype="pdf")
-        for i in range(pdf.page_count):
-            page = pdf.load_page(i)
-            html = page.get_textpage().extractHTML()
-            fullHtml += html
-            print(html)
+        doc = pymupdf.open(stream=file.read(), filetype="pdf")
 
-        # pdftext = pymupdf4llm.to_markdown(pdf)
+        WHITE = pymupdf.pdfcolor["white"]
+        textflags = pymupdf.TEXT_DEHYPHENATE
+        translator = GoogleTranslator(source="auto", target="ja")
+        ocg = doc.add_ocg("Japanese", on="True")
 
-        # text = pdf.load_page(0).get_text()
+        for page in doc:
+            blocks = page.get_text("blocks", flags=textflags)
+            for block in blocks:
+                bbox = block[:4]
+                text = block[4]
+                ja = ""
+                i = 0
+                if len(text) >= 5000:
+                    while i < len(text):
+                        selectedText = text[i : i + 4000]
+                        # print(f"{i}:{selectedText}")
+                        ja += translator.translate(selectedText)
+                        i += 4000
+                else:
+                    ja = translator.translate(text)
+                page.draw_rect(bbox, color=None, fill=WHITE, oc=ocg)
+                page.insert_htmlbox(bbox, ja, oc=ocg)
 
-        index = 0
-        fullText = ""
+        doc.subset_fonts()
+        doc.ez_save("output.pdf")
 
-        while index + 1 <= len(fullHtml):
-            tmpText = fullHtml[index : index + 4001]
-
-            translatedText = GoogleTranslator(source="auto", target="ja").translate(
-                text=tmpText
-            )
-            fullText += translatedText
-            index += 4000
-
-        story = pymupdf.Story(html=fullHtml)
-        writer = pymupdf.DocumentWriter("output.pdf")
-        MEDIABOX = pymupdf.paper_rect("A4")
-        WHERE = MEDIABOX + (36, 36, -36, -36)  # leave borders of 0.5 inches
-
-        more = 1  # will indicate end of input once it is set to 0
-
-        while more:
-            device = writer.begin_page(MEDIABOX)
-            more, _ = story.place(WHERE)
-            story.draw(device)
-            writer.end_page()
-
-        writer.close()
-
-        # translatedPDF = GoogleTranslator(source="auto", target="ja").translate_file(
-        #     "Improving English reading for EFL readers.pdf"
-        # )
-        # print(len(translatedText))
         return ""
 
 
