@@ -54,7 +54,8 @@ def upload_pdf():
                 else:
                     ja = translator.translate(text)
                 page.draw_rect(bbox, color=None, fill=WHITE, oc=ocg)
-                page.insert_htmlbox(bbox, ja, oc=ocg)
+                if isinstance(ja, str):
+                    page.insert_htmlbox(bbox, ja, oc=ocg)
 
         doc.subset_fonts()
         doc.ez_save("output.pdf")
