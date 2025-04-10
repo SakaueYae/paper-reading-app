@@ -10,14 +10,14 @@ type ChatHistory = {
   title: string;
 };
 
-type SidebarProps = {
+export type SidebarProps = {
   chats: ChatHistory[];
-  onClick: (id: string) => void;
+  onChatClick: (id: string) => void;
 };
 
 export const Sidebar: FC<SidebarProps & BoxProps> = ({
   chats,
-  onClick,
+  onChatClick,
   ...props
 }) => {
   return (
@@ -42,7 +42,7 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
             _hover={{
               bgColor: "gray.200",
             }}
-            onClick={() => onClick(id)}
+            onClick={() => onChatClick(id)}
           >
             <Heading as="h3" size="md">
               {date}

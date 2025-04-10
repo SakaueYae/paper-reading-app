@@ -1,5 +1,5 @@
-import { Box, Button, Input } from "@chakra-ui/react";
-import { useRef, useState } from "react";
+import { Box, Button, Input, BoxProps } from "@chakra-ui/react";
+import { FC, useRef, useState } from "react";
 import { InputGroup } from "../../ui/chakraui/input-group";
 import { Field } from "../../ui/chakraui/field";
 import { LuSearch } from "react-icons/lu";
@@ -18,7 +18,12 @@ type ChatProps = {
   onFileUpload: (file: File) => void;
 };
 
-export const Chat = ({ isFirst, onClick, onFileUpload }: ChatProps) => {
+export const Chat: FC<ChatProps & BoxProps> = ({
+  isFirst,
+  onClick,
+  onFileUpload,
+  ...props
+}) => {
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
   const handleClick = (value?: string) => {
@@ -34,7 +39,7 @@ export const Chat = ({ isFirst, onClick, onFileUpload }: ChatProps) => {
   };
 
   return (
-    <Box flex={1} p={8}>
+    <Box p={8} {...props}>
       <Box
         h={"100%"}
         display={"flex"}

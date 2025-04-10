@@ -4,6 +4,7 @@ import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
 import { useEffect } from "react";
 import axios from "axios";
+import { Drawer } from "@/components/ui/Drawer";
 
 export const Home = () => {
   const { toggleColorMode } = useColorMode();
@@ -42,13 +43,16 @@ export const Home = () => {
     <Box display={"flex"} h={"100%"} color={"gray.600"}>
       <Sidebar
         chats={mockArray}
-        onClick={(id) => console.log(id)}
-        maxW={"1/5"}
+        onChatClick={(id) => console.log(id)}
+        flex={1}
+        maxW={300}
+        display={{ base: "none", md: "flex" }}
       />
       <Chat
         onClick={(value) => console.log(value)}
         onFileUpload={uploadFile}
         isFirst
+        flex={4}
       />
       {/* Home
       <Button onClick={toggleColorMode}>Toggle Mode</Button> */}
