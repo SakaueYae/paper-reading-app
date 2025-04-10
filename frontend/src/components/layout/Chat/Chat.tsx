@@ -34,7 +34,7 @@ export const Chat = ({ isFirst, onClick, onFileUpload }: ChatProps) => {
   };
 
   return (
-    <Box w={"4/5"} p={8}>
+    <Box flex={1} p={8}>
       <Box
         h={"100%"}
         display={"flex"}

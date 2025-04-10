@@ -1,7 +1,8 @@
-import { Box, Heading, Text, VStack } from "@chakra-ui/react";
+import { Box, Heading, Text, VStack, BoxProps } from "@chakra-ui/react";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/chakraui/button";
 import { IoAddOutline } from "react-icons/io5";
+import { FC } from "react";
 
 type ChatHistory = {
   id: string;
@@ -14,17 +15,21 @@ type SidebarProps = {
   onClick: (id: string) => void;
 };
 
-export const Sidebar = ({ chats, onClick }: SidebarProps) => {
+export const Sidebar: FC<SidebarProps & BoxProps> = ({
+  chats,
+  onClick,
+  ...props
+}) => {
   return (
     <Box
       as="nav"
       h={"100%"}
-      w={"1/5"}
       bg={"gray.100"}
       px={3}
       py={8}
       display={"flex"}
       flexDir={"column"}
+      {...props}
     >
       <Logo />
       <VStack gap={1} alignItems={"start"} mt={4} flex={1}>

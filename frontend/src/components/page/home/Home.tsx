@@ -39,8 +39,12 @@ export const Home = () => {
   }, []);
 
   return (
-    <Box display={"flex"} h={"100%"}>
-      <Sidebar chats={mockArray} onClick={(id) => console.log(id)} />
+    <Box display={"flex"} h={"100%"} color={"gray.600"}>
+      <Sidebar
+        chats={mockArray}
+        onClick={(id) => console.log(id)}
+        maxW={"1/5"}
+      />
       <Chat
         onClick={(value) => console.log(value)}
         onFileUpload={uploadFile}
