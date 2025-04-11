@@ -31,7 +31,7 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
       flexDir={"column"}
       {...props}
     >
-      <Logo />
+      <Logo type="sidebar" />
       <VStack gap={1} alignItems={"start"} mt={4} flex={1}>
         {chats.map(({ id, date, title }) => (
           <Box

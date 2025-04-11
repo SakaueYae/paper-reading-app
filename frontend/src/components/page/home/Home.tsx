@@ -4,7 +4,6 @@ import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
 import { useEffect } from "react";
 import axios from "axios";
-import { Drawer } from "@/components/ui/Drawer";
 
 export const Home = () => {
   const { toggleColorMode } = useColorMode();
