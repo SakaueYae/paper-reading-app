@@ -7,7 +7,8 @@ import { MyPage } from "./components/page/mypage/MyPage";
 function App() {
   return (
     <Routes>
-      <Route path="signin" element={<Signin />} />
+      <Route path="signin" element={<Signin type="signin" />} />
+      <Route path="signup" element={<Signin type="signup" />} />
       <Route path="home" element={<Home />} />
       <Route path="mypage" element={<MyPage />} />
     </Routes>

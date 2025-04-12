@@ -3,50 +3,58 @@ import {
   Stack,
   Field,
   Input,
-  Button,
   For,
   Heading,
   Text,
   Link,
+  Alert,
 } from "@chakra-ui/react";
+import { Button } from "../ui/chakraui/button";
 
-type FormValues = {
-  username: string;
+export type FormValues = {
+  email: string;
   password: string;
 };
 
-type FormProps = {
-  type: "signup" | "signin";
+export type FormType = "signup" | "signin";
+
+export type FormProps = {
+  type: FormType;
+  error: string | null;
+  isLoading: boolean;
+  onSubmit: (value: FormValues) => void;
 };
 
 const formTextMap = {
   signup: {
-    heading: "Sign Up",
-    button: "signup",
+    heading: "Sign up",
+    button: "Sign up",
     footer: "Have an account?",
     link: "signin",
   },
   signin: {
-    heading: "Sign In",
-    button: "signin",
+    heading: "Sign in",
+    button: "Sign in",
     footer: "No account?",
     link: "signup",
   },
 } as const;
 
-export const Form = ({ type }: FormProps) => {
+export const Form = ({ type, error, isLoading, onSubmit }: FormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>();
 
-  const formValuesArray: (keyof FormValues)[] = ["username", "password"];
-  const onSubmit = handleSubmit((data) => console.log(data));
+  const formValuesArray: (keyof FormValues)[] = ["email", "password"];
   const text = formTextMap[type];
 
   return (
-    <form onSubmit={onSubmit} style={{ width: "100%", height: "100%" }}>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      style={{ width: "100%", height: "100%" }}
+    >
       <Stack
         h={"100%"}
         w={"100%"}
@@ -66,7 +74,7 @@ export const Form = ({ type }: FormProps) => {
                   {...register(item, {
                     required: "この項目を入力してください。",
                   })}
-                  type={item === "password" ? "password" : "text"}
+                  type={item === "password" ? "password" : "email"}
                 />
                 <Field.ErrorText>{errors[item]?.message}</Field.ErrorText>
               </Field.Root>
@@ -79,9 +87,20 @@ export const Form = ({ type }: FormProps) => {
             {text.link}
           </Link>
         </Text>
-        <Button type="submit" size={"xl"} colorPalette={"blue"}>
-          {type === "signup" ? "signup" : "signin"}
+        <Button
+          type="submit"
+          size={"xl"}
+          colorPalette={"blue"}
+          loading={isLoading}
+        >
+          {text.button}
         </Button>
+        {error && (
+          <Alert.Root status="error" maxW={"xl"}>
+            <Alert.Indicator />
+            <Alert.Title>{error}</Alert.Title>
+          </Alert.Root>
+        )}
       </Stack>
     </form>
   );
