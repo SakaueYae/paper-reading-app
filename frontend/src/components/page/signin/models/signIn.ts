@@ -1,6 +1,6 @@
 import { supabase } from "@/utils/supabase";
 import { FormValues } from "@/components/layout/Form";
-import { AuthError } from "@supabase/supabase-js";
+import { isAuthError } from "@supabase/supabase-js";
 
 export const signIn = async ({ email, password }: FormValues) => {
   try {
@@ -9,10 +9,10 @@ export const signIn = async ({ email, password }: FormValues) => {
       password,
     });
 
-    if (error) return error.message;
+    if (error) throw new Error(error.message);
     else return null;
   } catch (e) {
-    if (e instanceof AuthError) return e.message;
+    if (isAuthError(e)) return e.message;
     else return "エラーが発生しました";
   }
 };

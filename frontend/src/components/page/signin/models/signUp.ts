@@ -12,7 +12,7 @@ export const signUp = async ({ email, password }: FormValues) => {
       },
     });
 
-    if (error) return error.message;
+    if (error) throw new Error(error.message);
     else return null;
   } catch (e) {
     if (e instanceof AuthError) return e.message;
