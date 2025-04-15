@@ -16,12 +16,14 @@ type ChatProps = {
   isFirst?: boolean;
   onClick: (value: string) => void;
   onFileUpload: (file: File) => void;
+  signOut: () => void;
 };
 
 export const Chat: FC<ChatProps & BoxProps> = ({
   isFirst,
   onClick,
   onFileUpload,
+  signOut,
   ...props
 }) => {
   const [isError, setIsError] = useState<boolean>(false);
@@ -47,7 +49,7 @@ export const Chat: FC<ChatProps & BoxProps> = ({
         gap={8}
         justifyContent={"space-between"}
       >
-        <ChatHeader name="Sage Adebayo" />
+        <ChatHeader name="Sage Adebayo" signOut={signOut} />
 
         {isFirst ? (
           <Box

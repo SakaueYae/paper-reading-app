@@ -4,6 +4,7 @@ import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
 import { useEffect } from "react";
 import axios from "axios";
+import { signOut } from "./models/signOut";
 
 export const Home = () => {
   const { toggleColorMode } = useColorMode();
@@ -50,6 +51,7 @@ export const Home = () => {
       <Chat
         onClick={(value) => console.log(value)}
         onFileUpload={uploadFile}
+        signOut={signOut}
         isFirst
         flex={4}
       />
