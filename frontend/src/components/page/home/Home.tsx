@@ -5,6 +5,7 @@ import { Chat } from "@/components/layout/Chat/Chat";
 import { useEffect } from "react";
 import axios from "axios";
 import { signOut } from "./models/signOut";
+import { supabase } from "@/utils/supabase";
 
 export const Home = () => {
   const { toggleColorMode } = useColorMode();
@@ -17,11 +18,21 @@ export const Home = () => {
   ];
 
   const uploadFile = async (file: File) => {
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+    const refreshToken = session.data.session?.refresh_token;
+    if (!accessToken || !refreshToken) {
+      alert("ログインしていません");
+      return;
+    }
+
     const formData = new FormData();
     formData.append(file.name, file);
     const text = await axios.post("/api/pdf", formData, {
       headers: {
         "content-type": "multipart/form-data",
+        Authorization: `Bearer ${accessToken}`,
+        "X-Refresh-Token": refreshToken,
       },
     });
     console.log(text.data);

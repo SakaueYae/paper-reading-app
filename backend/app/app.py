@@ -1,3 +1,6 @@
+import base64
+import json
+from typing import Optional
 from flask import Flask, jsonify, request
 import pymupdf
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -7,7 +10,7 @@ from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import os
-import requests
+import tempfile
 
 # .env ファイルから環境変数を読み込み
 load_dotenv()
@@ -39,8 +42,46 @@ def get_data():
     return jsonify(data)
 
 
+# JWTトークンから情報を抽出する関数（簡易版）
+def parse_jwt_payload(token):
+    try:
+        # JWTの形式: ヘッダー.ペイロード.署名
+        token_parts = token.split(".")
+        if len(token_parts) >= 2:
+            # Base64URLエンコードされたペイロード部分を取得
+            payload_part = token_parts[1]
+            # Base64URLデコード用にパディングを調整
+            payload_part += "=" * (-len(payload_part) % 4)
+            # デコードしてJSONとして解析
+            decoded = base64.urlsafe_b64decode(payload_part)
+            return json.loads(decoded)
+        return None
+    except Exception as e:
+        print(f"Failed to parse JWT: {e}")
+        return None
+
+
 @app.route("/api/pdf", methods=["POST"])
 def upload_pdf():
+    # 認証ヘッダーの検証
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return {"status": "error", "message": "Invalid token"}, 401
+
+    # トークン抽出
+    access_token = auth_header.replace("Bearer ", "")
+    refresh_token = request.headers.get("X-Refresh-Token")
+
+    # トークンからペイロードを取得
+    payload = parse_jwt_payload(access_token)
+    if not payload:
+        return jsonify({"status": "error", "message": "Invalid token"}), 401
+
+    # ユーザーIDの取得（Supabaseトークンでは通常'sub'キーに格納されています）
+    user_id = payload.get("sub")
+    if not user_id:
+        return {"status": "error", "message": "User ID not found in token"}, 401
+
     if not request.files:
         return "No file part", 400
     for key, file in request.files.items():
@@ -77,27 +118,32 @@ def upload_pdf():
         pdf_bytes = doc.write()
         doc.close()
 
+    # 一時ファイルを作成
+    fd, tmp_path = tempfile.mkstemp(suffix=".pdf")
     try:
-        # 2. アップロード
-        upload_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/output.pdf"
+        # ファイルに書き込み
+        with os.fdopen(fd, "wb") as tmp:
+            tmp.write(pdf_bytes)
 
-        headers = {
-            "Authorization": f"Bearer {SUPABASE_KEY}",
-            "Content-Type": "application/pdf",
-            "x-upsert": "true",  # 上書き許可（false にするとエラーになる）
-        }
+        supabase.auth.set_session(access_token, refresh_token)
 
-        response = requests.put(upload_url, headers=headers, data=BytesIO(pdf_bytes))
+        # Supabaseにアップロード
+        file_name = os.path.basename(tmp_path)
+        res = supabase.storage.from_("file").upload(
+            path=f"{user_id}/{file_name}",
+            file=pdf_bytes,  # バイナリデータを直接渡す
+            file_options={"content-type": "application/pdf", "upsert": "true"},
+        )
 
-        if response.status_code in [200, 201]:
-            print("アップロード成功！")
-        else:
-            print("アップロード失敗:", response.status_code, response.text)
+        return {"status": "success", "data": res}
 
     except Exception as e:
-        print("エラー発生:", e)
+        return {"status": "error", "message": str(e)}, 500
 
-    return ""
+    finally:
+        # ファイルを削除
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 if __name__ == "__main__":

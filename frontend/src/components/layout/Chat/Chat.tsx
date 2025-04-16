@@ -11,6 +11,7 @@ import {
 } from "../../ui/chakraui/file-upload";
 import { ChatHeader } from "./ChatHeader";
 import { ChatContent } from "./ChatContent";
+import { useAuthContext } from "@/components/context/AuthProvider";
 
 type ChatProps = {
   isFirst?: boolean;
@@ -28,6 +29,7 @@ export const Chat: FC<ChatProps & BoxProps> = ({
 }) => {
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
+  const user = useAuthContext();
   const handleClick = (value?: string) => {
     if (value) {
       setIsError(false);
@@ -49,7 +51,7 @@ export const Chat: FC<ChatProps & BoxProps> = ({
         gap={8}
         justifyContent={"space-between"}
       >
-        <ChatHeader name="Sage Adebayo" signOut={signOut} />
+        <ChatHeader name={user.user?.email ?? ""} signOut={signOut} />
 
         {isFirst ? (
           <Box
