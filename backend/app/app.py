@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 import os
 import tempfile
+import platform
 
 # .env ファイルから環境変数を読み込み
 load_dotenv()
@@ -84,9 +85,13 @@ def upload_pdf():
 
     if not request.files:
         return "No file part", 400
+
+    file_name = ""
     for key, file in request.files.items():
         if file.filename == "":
             return "No selected file", 400
+
+        file_name = file.filename
         doc = pymupdf.open(stream=file.read(), filetype="pdf")
 
         WHITE = pymupdf.pdfcolor["white"]
@@ -118,8 +123,16 @@ def upload_pdf():
         pdf_bytes = doc.write()
         doc.close()
 
+    # osによってtmpディレクトリがあるかどうかが異なる
+    if platform.system() == "Windows":
+        temp_dir = "tmp"
+        os.makedirs(temp_dir, exist_ok=True)
+    else:
+        temp_dir = "/tmp"
+
     # 一時ファイルを作成
-    fd, tmp_path = tempfile.mkstemp(suffix=".pdf")
+    fd, tmp_path = tempfile.mkstemp(suffix=".pdf", dir=temp_dir)
+
     try:
         # ファイルに書き込み
         with os.fdopen(fd, "wb") as tmp:
@@ -129,13 +142,19 @@ def upload_pdf():
 
         # Supabaseにアップロード
         file_name = os.path.basename(tmp_path)
-        res = supabase.storage.from_("file").upload(
-            path=f"{user_id}/{file_name}",
+        file_path = f"{user_id}/{file_name}"
+        supabase.storage.from_("file").upload(
+            path=file_path,
             file=pdf_bytes,  # バイナリデータを直接渡す
             file_options={"content-type": "application/pdf", "upsert": "true"},
         )
 
-        return {"status": "success", "data": res}
+        signed_url_response = supabase.storage.from_("file").create_signed_url(
+            path=file_path, expires_in=300
+        )
+        signed_url = signed_url_response.get("signedURL")
+
+        return {"status": "success", "download_url": signed_url}
 
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500
