@@ -2,12 +2,24 @@ import { useColorMode } from "@/components/ui/chakraui/color-mode";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { signOut } from "./models/signOut";
 import { supabase } from "@/utils/supabase";
+import { MessageList } from "@/components/layout/Chat/ChatContent";
 
 export const Home = () => {
+  const defaultMessages: MessageList = {
+    sentMessage: {
+      id: "null",
+    },
+    contents: [
+      {
+        id: "null",
+      },
+    ],
+  };
+  const [messages, setMessages] = useState<MessageList[]>([defaultMessages]);
   const { toggleColorMode } = useColorMode();
   const mockArray = [
     {
@@ -28,14 +40,33 @@ export const Home = () => {
 
     const formData = new FormData();
     formData.append(file.name, file);
-    const text = await axios.post("/api/pdf", formData, {
+    const res = await axios.post("/api/pdf", formData, {
       headers: {
         "content-type": "multipart/form-data",
         Authorization: `Bearer ${accessToken}`,
         "X-Refresh-Token": refreshToken,
       },
     });
-    console.log(text.data);
+
+    setMessages([
+      {
+        sentMessage: {
+          id: "file",
+          file: {
+            name: file.name,
+          },
+        },
+        contents: [
+          {
+            id: "upload",
+            file: {
+              name: res.data.file_name,
+              link: res.data.download_url,
+            },
+          },
+        ],
+      },
+    ]);
   };
 
   useEffect(() => {
@@ -63,8 +94,9 @@ export const Home = () => {
         onClick={(value) => console.log(value)}
         onFileUpload={uploadFile}
         signOut={signOut}
-        isFirst
+        isFirst={messages[0].sentMessage.id === "null"}
         flex={4}
+        messages={messages}
       />
       {/* Home
       <Button onClick={toggleColorMode}>Toggle Mode</Button> */}

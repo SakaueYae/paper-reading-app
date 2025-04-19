@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         data: { session },
         // error,
       } = await supabase.auth.getSession();
-      console.log(session);
       setUser(session?.user || null);
       setIsLoading(false);
       // TODO:エラー画面実装

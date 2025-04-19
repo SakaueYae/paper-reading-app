@@ -4,17 +4,14 @@ import { InputGroup } from "../../ui/chakraui/input-group";
 import { Field } from "../../ui/chakraui/field";
 import { LuSearch } from "react-icons/lu";
 import { IoSend } from "react-icons/io5";
-import {
-  FileUploadDropzone,
-  FileUploadList,
-  FileUploadRoot,
-} from "../../ui/chakraui/file-upload";
 import { ChatHeader } from "./ChatHeader";
-import { ChatContent } from "./ChatContent";
+import { ChatContent, MessageList } from "./ChatContent";
 import { useAuthContext } from "@/components/context/AuthProvider";
+import { FileUploadField } from "@/components/ui/FileUploadField";
 
 type ChatProps = {
   isFirst?: boolean;
+  messages: MessageList[];
   onClick: (value: string) => void;
   onFileUpload: (file: File) => void;
   signOut: () => void;
@@ -22,6 +19,7 @@ type ChatProps = {
 
 export const Chat: FC<ChatProps & BoxProps> = ({
   isFirst,
+  messages,
   onClick,
   onFileUpload,
   signOut,
@@ -30,6 +28,7 @@ export const Chat: FC<ChatProps & BoxProps> = ({
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
   const user = useAuthContext();
+  const email = user.user?.email ?? "";
   const handleClick = (value?: string) => {
     if (value) {
       setIsError(false);
@@ -51,7 +50,7 @@ export const Chat: FC<ChatProps & BoxProps> = ({
         gap={8}
         justifyContent={"space-between"}
       >
-        <ChatHeader name={user.user?.email ?? ""} signOut={signOut} />
+        <ChatHeader name={email} signOut={signOut} />
 
         {isFirst ? (
           <Box
@@ -60,53 +59,29 @@ export const Chat: FC<ChatProps & BoxProps> = ({
             display={"flex"}
             alignItems={"center"}
           >
-            <FileUploadRoot
-              maxW="xl"
-              alignItems="stretch"
-              maxFiles={10}
-              m={"auto"}
-              onFileAccept={(details) => onFileUpload(details.files[0])}
-            >
-              <FileUploadDropzone
-                label="Drag and drop here to upload"
-                description=".png, .jpg up to 5MB"
-              />
-              <FileUploadList />
-            </FileUploadRoot>
+            <FileUploadField onFileUpload={onFileUpload} />
           </Box>
         ) : (
-          <Box flex={1} overflow={"auto"}>
-            <ChatContent
-              name="Sage Adebayo"
-              sentMessage={{
-                id: "about hiragana",
-                message: "aiueo",
-              }}
-              contents={[
-                {
-                  id: "about hiragana",
-                  message: "aiueo",
-                },
-                {
-                  id: "about hiragana",
-                  message: "kakikukeko",
-                },
-              ]}
-            />
-          </Box>
+          <>
+            <Box flex={1} overflow={"auto"}>
+              <ChatContent name={email} messages={messages} />
+            </Box>
+            <Field invalid={isError} errorText={"テキストを入力してください。"}>
+              <InputGroup
+                startElement={<LuSearch />}
+                endElement={
+                  <SendButton onClick={() => handleClick(ref.current?.value)} />
+                }
+                w={"100%"}
+              >
+                <Input
+                  placeholder="Input something to ask or upload pdf file"
+                  ref={ref}
+                />
+              </InputGroup>
+            </Field>
+          </>
         )}
-
-        <Field invalid={isError} errorText={"テキストを入力してください。"}>
-          <InputGroup
-            startElement={<LuSearch />}
-            endElement={
-              <SendButton onClick={() => handleClick(ref.current?.value)} />
-            }
-            w={"100%"}
-          >
-            <Input placeholder="Search contacts" ref={ref} />
-          </InputGroup>
-        </Field>
       </Box>
     </Box>
   );

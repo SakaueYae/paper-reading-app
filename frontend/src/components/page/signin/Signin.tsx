@@ -14,14 +14,14 @@ export const Signin = ({ type }: { type: FormType }) => {
 
   // ログイン状態だとホーム画面へ遷移
   const { user } = useAuthContext();
-  if (user) navigate("/home");
+  if (user) navigate("/");
 
   const handleForm = async (values: FormValues) => {
     setIsLoading(true);
     if (type === "signin") {
       const data = await signIn(values);
       setError(data);
-      if (!data) navigate("/home");
+      if (!data) navigate("/");
     } else {
       const data = await signUp(values);
       setError(data);

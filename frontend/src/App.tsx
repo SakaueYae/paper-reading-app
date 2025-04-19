@@ -11,7 +11,7 @@ function App() {
       <Route path="signin" element={<Signin type="signin" />} />
       <Route path="signup" element={<Signin type="signup" />} />
       <Route
-        path="home"
+        path="/"
         element={
           <AuthGuard>
             <Home />

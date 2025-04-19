@@ -142,6 +142,7 @@ def upload_pdf():
 
         # Supabaseにアップロード
         file_name = os.path.basename(tmp_path)
+        print(file_name)
         file_path = f"{user_id}/{file_name}"
         supabase.storage.from_("file").upload(
             path=file_path,
@@ -154,7 +155,7 @@ def upload_pdf():
         )
         signed_url = signed_url_response.get("signedURL")
 
-        return {"status": "success", "download_url": signed_url}
+        return {"status": "success", "download_url": signed_url, "file_name": file_name}
 
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500

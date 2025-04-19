@@ -1,13 +1,16 @@
 import { Box } from "@chakra-ui/react";
+import { PDFIcon, FileData } from "./PDFIcon";
 
 type SpeechBubbleProps = {
-  message: string;
+  message?: string;
   isLeft?: boolean;
+  file?: FileData;
 };
 
 export const SpeechBubble = ({
   message,
   isLeft = false,
+  file,
 }: SpeechBubbleProps) => {
   return (
     <Box
@@ -70,7 +73,7 @@ export const SpeechBubble = ({
           clipPath={"polygon(0 0, 100% 50%, 0 100%)"}
         ></Box>
       )}
-      {message}
+      {file ? <PDFIcon file={file} /> : message}
     </Box>
   );
 };

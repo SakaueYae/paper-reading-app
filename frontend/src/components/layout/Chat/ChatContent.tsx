@@ -2,42 +2,43 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Box, Flex, VStack } from "@chakra-ui/react";
 import { SpeechBubble } from "@/components/ui/SpeechBubble";
 import { ChatBox } from "@/components/ui/ChatBox";
+import { FileData } from "@/components/ui/PDFIcon";
 
 type Message = {
   id: string;
-  message: string;
-  file?: string;
+  message?: string;
+  file?: FileData;
 };
 
-type ChatContentProps = {
-  name: string;
+export type MessageList = {
   sentMessage: Message;
   contents: Message[];
 };
 
-export const ChatContent = ({
-  name,
-  sentMessage,
-  contents,
-}: ChatContentProps) => {
-  return (
+type ChatContentProps = {
+  name: string;
+  messages: MessageList[];
+};
+
+export const ChatContent = ({ name, messages }: ChatContentProps) => {
+  return messages.map(({ sentMessage, contents }) => (
     <Box>
       <Flex justifyContent={"end"} gap={8}>
-        <SpeechBubble message={sentMessage.message} />
+        <SpeechBubble message={sentMessage.message} file={sentMessage.file} />
         <Avatar name={name} />
       </Flex>
       <Flex justifyContent={"start"} gap={8}>
         <Avatar />
         <VStack alignItems={"start"}>
-          {contents.map(({ id, message }, i) =>
+          {contents.map(({ id, message, file }, i) =>
             i === 0 ? (
-              <SpeechBubble key={id} message={message} isLeft />
+              <SpeechBubble key={id} message={message} isLeft file={file} />
             ) : (
-              <ChatBox message={message} />
+              message && <ChatBox message={message} />
             )
           )}
         </VStack>
       </Flex>
     </Box>
-  );
+  ));
 };
