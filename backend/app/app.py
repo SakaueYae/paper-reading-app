@@ -1,4 +1,5 @@
 import base64
+import datetime
 import json
 from typing import Optional
 from flask import Flask, jsonify, request
@@ -133,6 +134,15 @@ def upload_pdf():
     # 一時ファイルを作成
     fd, tmp_path = tempfile.mkstemp(suffix=".pdf", dir=temp_dir)
 
+    # 現在の日時をタイムスタンプに変換（例: 20250412_143015）
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    # 拡張子を分ける
+    name_without_ext, ext = os.path.splitext(file_name)
+    # タイムスタンプ付きのファイル名を作成
+    unique_name = f"{name_without_ext}_{timestamp}_ja{ext}"
+    # アップロード先のパスを指定
+    upload_path = f"{user_id}/{unique_name}"
+
     try:
         # ファイルに書き込み
         with os.fdopen(fd, "wb") as tmp:
@@ -141,21 +151,22 @@ def upload_pdf():
         supabase.auth.set_session(access_token, refresh_token)
 
         # Supabaseにアップロード
-        file_name = os.path.basename(tmp_path)
-        print(file_name)
-        file_path = f"{user_id}/{file_name}"
         supabase.storage.from_("file").upload(
-            path=file_path,
+            path=upload_path,
             file=pdf_bytes,  # バイナリデータを直接渡す
-            file_options={"content-type": "application/pdf", "upsert": "true"},
+            file_options={"content-type": "application/pdf"},
         )
 
         signed_url_response = supabase.storage.from_("file").create_signed_url(
-            path=file_path, expires_in=300
+            path=upload_path, expires_in=300
         )
         signed_url = signed_url_response.get("signedURL")
 
-        return {"status": "success", "download_url": signed_url, "file_name": file_name}
+        return {
+            "status": "success",
+            "download_url": signed_url,
+            "file_name": unique_name,
+        }
 
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500

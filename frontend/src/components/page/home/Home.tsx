@@ -7,6 +7,7 @@ import axios from "axios";
 import { signOut } from "./models/signOut";
 import { supabase } from "@/utils/supabase";
 import { MessageList } from "@/components/layout/Chat/ChatContent";
+import { fileUploadText } from "./text";
 
 export const Home = () => {
   const defaultMessages: MessageList = {
@@ -63,6 +64,10 @@ export const Home = () => {
               name: res.data.file_name,
               link: res.data.download_url,
             },
+          },
+          {
+            id: "upload_text",
+            message: fileUploadText,
           },
         ],
       },
