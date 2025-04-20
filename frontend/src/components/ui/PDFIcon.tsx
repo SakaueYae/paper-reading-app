@@ -11,7 +11,6 @@ type PDFIconProps = {
 };
 
 export const PDFIcon = ({ file }: PDFIconProps) => {
-  console.log(file);
   return (
     <Box textAlign={"center"} width={"fit-content"}>
       <Link

@@ -2,12 +2,27 @@ import { useColorMode } from "@/components/ui/chakraui/color-mode";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { signOut } from "./models/signOut";
-import { supabase } from "@/utils/supabase";
 import { MessageList } from "@/components/layout/Chat/ChatContent";
-import { fileUploadText } from "./text";
+import { uploadFile } from "./models/uploadFile";
+import { useAuthContext } from "@/components/context/AuthProvider";
+import { getChatSessions } from "./models/getChatSessions";
+import { getMessages } from "./models/getMessages";
+
+interface Message {
+  id: string;
+  content: string;
+  role: "user" | "assistant" | "system";
+  created_at: string;
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const Home = () => {
   const defaultMessages: MessageList = {
@@ -21,6 +36,12 @@ export const Home = () => {
     ],
   };
   const [messages, setMessages] = useState<MessageList[]>([defaultMessages]);
+  const [message, setMessage] = useState("");
+  // const [messages, setMessages] = useState<Message[]>([]);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [currentSession, setCurrentSession] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toggleColorMode } = useColorMode();
   const mockArray = [
     {
@@ -29,50 +50,46 @@ export const Home = () => {
       title: "研究",
     },
   ];
+  const { user, accessToken, refreshToken, signOut } = useAuthContext();
 
-  const uploadFile = async (file: File) => {
-    const session = await supabase.auth.getSession();
-    const accessToken = session.data.session?.access_token;
-    const refreshToken = session.data.session?.refresh_token;
-    if (!accessToken || !refreshToken) {
-      alert("ログインしていません");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append(file.name, file);
-    const res = await axios.post("/api/pdf", formData, {
-      headers: {
-        "content-type": "multipart/form-data",
-        Authorization: `Bearer ${accessToken}`,
-        "X-Refresh-Token": refreshToken,
-      },
-    });
-
-    setMessages([
-      {
-        sentMessage: {
-          id: "file",
-          file: {
-            name: file.name,
-          },
-        },
-        contents: [
-          {
-            id: "upload",
-            file: {
-              name: res.data.file_name,
-              link: res.data.download_url,
-            },
-          },
-          {
-            id: "upload_text",
-            message: fileUploadText,
-          },
-        ],
-      },
-    ]);
+  const handleGetMessages = async (id: string) => {
+    if (!(accessToken && refreshToken)) return;
+    const data = await getMessages(id, accessToken, refreshToken);
+    if (!data) return;
+    setMessages(data);
+    // setTimeout(() => {
+    //   scrollToBottom();
+    // }, 100);
   };
+
+  // 新しいセッションを作成
+  const createNewSession = () => {
+    setCurrentSession(null);
+    setMessages([]);
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!(accessToken && refreshToken)) return;
+    const data = await uploadFile(file, accessToken, refreshToken);
+    if (typeof data === "string") return;
+    setMessages([data]);
+  };
+
+  // 初回ロード時にセッション一覧を取得
+  useEffect(() => {
+    (async () => {
+      if (user && accessToken && refreshToken) {
+        const sessions = await getChatSessions(accessToken, refreshToken);
+        setSessions(sessions ?? null);
+        console.log(sessions);
+        // 初回ロード時に最新のセッションがあれば選択
+        if (sessions.length > 0 && !currentSession) {
+          setCurrentSession(sessions[0].id);
+          handleGetMessages(sessions[0].id);
+        }
+      }
+    })();
+  }, [user, accessToken]);
 
   useEffect(() => {
     (async () => {
@@ -97,7 +114,7 @@ export const Home = () => {
       />
       <Chat
         onClick={(value) => console.log(value)}
-        onFileUpload={uploadFile}
+        onFileUpload={handleFileUpload}
         signOut={signOut}
         isFirst={messages[0].sentMessage.id === "null"}
         flex={4}

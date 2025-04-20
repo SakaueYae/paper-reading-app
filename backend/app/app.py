@@ -2,6 +2,7 @@ import base64
 import datetime
 import json
 from typing import Optional
+import uuid
 from flask import Flask, jsonify, request
 import pymupdf
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -13,6 +14,9 @@ from supabase import create_client, Client
 import os
 import tempfile
 import platform
+from langchain.chains import ConversationChain
+from langchain.memory import ConversationBufferMemory
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # .env ファイルから環境変数を読み込み
 load_dotenv()
@@ -20,7 +24,8 @@ load_dotenv()
 # 環境変数からSupabase情報を取得
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-BUCKET_NAME = os.environ.get("BUCKET_NAME")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+
 
 # Supabaseクライアントの作成
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -63,26 +68,116 @@ def parse_jwt_payload(token):
         return None
 
 
+# JWTトークンからユーザー情報を取得
+def get_user_from_token(token):
+    try:
+        # セッションを設定
+        response = supabase.auth.get_user(token)
+        return response.user
+    except Exception as e:
+        print(f"Error getting user: {e}")
+        return None
+
+
+# 勝手に実装
+def get_token_and_set_session(headers):
+    try:
+        # 認証ヘッダーの検証
+        auth_header = headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return {"status": "error", "message": "Invalid token"}, 401
+
+        # トークン抽出
+        access_token = auth_header.replace("Bearer ", "")
+        refresh_token = headers.get("X-Refresh-Token")
+
+        # トークンからペイロードを取得
+        payload = parse_jwt_payload(access_token)
+        if not payload:
+            return jsonify({"status": "error", "message": "Invalid token"}), 401
+
+        # ユーザーIDの取得（Supabaseトークンでは通常'sub'キーに格納されています）
+        user_id = payload.get("sub")
+
+        if not user_id:
+            return {"status": "error", "message": "User ID not found in token"}, 401
+
+        supabase.auth.set_session(access_token, refresh_token)
+
+        return user_id
+    except Exception as e:
+        print(f"Error getting user: {e}")
+        return None
+
+
+# チャットセッションを作成または取得
+def get_or_create_chat_session(user_id, session_id=None):
+    if session_id:
+        # 既存のセッションを取得
+        response = (
+            supabase.table("chat_sessions")
+            .select("*")
+            .eq("id", session_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data:
+            return response.data[0]
+
+    # 新しいセッションを作成
+    session_title = f"チャットセッション {uuid.uuid4().hex[:8]}"
+    response = (
+        supabase.table("chat_sessions")
+        .insert({"user_id": user_id, "title": session_title})
+        .execute()
+    )
+
+    return response.data[0]
+
+
+# セッションのメッセージ履歴を取得
+def get_chat_history(session_id):
+    response = (
+        supabase.table("messages")
+        .select("*")
+        .eq("session_id", session_id)
+        .order("created_at")
+        .execute()
+    )
+    return response.data
+
+
+# メッセージを保存
+def save_message(session_id, content, role):
+    response = (
+        supabase.table("messages")
+        .insert({"session_id": session_id, "content": content, "role": role})
+        .execute()
+    )
+    return response.data[0]
+
+
+# LangChainのメモリを初期化
+def initialize_memory_from_history(messages):
+    memory = ConversationBufferMemory(return_messages=True)
+
+    for msg in messages:
+        if msg["role"] == "user":
+            memory.chat_memory.add_user_message(msg["content"])
+        elif msg["role"] == "assistant":
+            memory.chat_memory.add_ai_message(msg["content"])
+
+    return memory
+
+
 @app.route("/api/pdf", methods=["POST"])
 def upload_pdf():
-    # 認証ヘッダーの検証
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return {"status": "error", "message": "Invalid token"}, 401
+    user_id = get_token_and_set_session(request.headers)
 
-    # トークン抽出
-    access_token = auth_header.replace("Bearer ", "")
-    refresh_token = request.headers.get("X-Refresh-Token")
-
-    # トークンからペイロードを取得
-    payload = parse_jwt_payload(access_token)
-    if not payload:
-        return jsonify({"status": "error", "message": "Invalid token"}), 401
-
-    # ユーザーIDの取得（Supabaseトークンでは通常'sub'キーに格納されています）
-    user_id = payload.get("sub")
     if not user_id:
-        return {"status": "error", "message": "User ID not found in token"}, 401
+        return jsonify(
+            {"status": "error", "message": "ユーザー認証に失敗しました"}
+        ), 401
 
     if not request.files:
         return "No file part", 400
@@ -148,8 +243,6 @@ def upload_pdf():
         with os.fdopen(fd, "wb") as tmp:
             tmp.write(pdf_bytes)
 
-        supabase.auth.set_session(access_token, refresh_token)
-
         # Supabaseにアップロード
         supabase.storage.from_("file").upload(
             path=upload_path,
@@ -175,6 +268,108 @@ def upload_pdf():
         # ファイルを削除
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    # リクエストからデータを取得
+    data = request.json
+    message = data.get("message")
+    session_id = data.get("session_id")
+
+    user_id = get_token_and_set_session(request.headers)
+
+    if not user_id:
+        return jsonify(
+            {"status": "error", "message": "ユーザー認証に失敗しました"}
+        ), 401
+
+    # セッションを取得または作成
+    session = get_or_create_chat_session(user_id, session_id)
+    session_id = session["id"]
+
+    # ユーザーメッセージを保存
+    save_message(session_id, message, "user")
+
+    # セッションの履歴を取得
+    chat_history = get_chat_history(session_id)
+
+    # LangChainのメモリを初期化
+    memory = initialize_memory_from_history(chat_history)
+
+    # 会話チェーンを作成
+    llm = ChatGoogleGenerativeAI(
+        temperature=0.7,
+        model_name="gemini-2.0-flash-001",  # または使用したいモデル
+        google_api_key=GOOGLE_API_KEY,
+    )
+
+    conversation = ConversationChain(llm=llm, memory=memory, verbose=True)
+
+    # AIの応答を生成
+    ai_response = conversation.predict(input=message)
+
+    # AIの応答を保存
+    save_message(session_id, ai_response, "assistant")
+
+    return jsonify(
+        {"status": "success", "response": ai_response, "session_id": session_id}
+    )
+
+
+@app.route("/api/sessions", methods=["GET"])
+def get_sessions():
+    user_id = get_token_and_set_session(request.headers)
+
+    if not user_id:
+        return jsonify(
+            {"status": "error", "message": "ユーザー認証に失敗しました"}
+        ), 401
+
+    # ユーザーのセッション一覧を取得
+    response = (
+        supabase.table("chat_sessions")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("updated_at", desc=True)
+        .execute()
+    )
+
+    return jsonify({"status": "success", "sessions": response.data})
+
+
+@app.route("/api/sessions/<session_id>/messages", methods=["GET"])
+def get_session_messages(session_id):
+    user_id = get_token_and_set_session(request.headers)
+
+    if not user_id:
+        return jsonify(
+            {"status": "error", "message": "ユーザー認証に失敗しました"}
+        ), 401
+
+    # セッションがユーザーのものか確認
+    session_response = (
+        supabase.table("chat_sessions")
+        .select("*")
+        .eq("id", session_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not session_response.data:
+        return jsonify(
+            {"status": "error", "message": "セッションが見つかりません"}
+        ), 404
+
+    # メッセージを取得
+    messages_response = (
+        supabase.table("messages")
+        .select("*")
+        .eq("session_id", session_id)
+        .order("created_at")
+        .execute()
+    )
+
+    return jsonify({"status": "success", "messages": messages_response.data})
 
 
 if __name__ == "__main__":
