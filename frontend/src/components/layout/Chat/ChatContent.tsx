@@ -2,43 +2,41 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Box, Flex, VStack } from "@chakra-ui/react";
 import { SpeechBubble } from "@/components/ui/SpeechBubble";
 import { ChatBox } from "@/components/ui/ChatBox";
-import { FileData } from "@/components/ui/PDFIcon";
 
-type Message = {
+export interface Message {
   id: string;
-  message?: string;
-  file?: FileData;
-};
-
-export type MessageList = {
-  sentMessage: Message;
-  contents: Message[];
-};
+  content: string;
+  role: "user" | "assistant" | "system";
+  created_at: string;
+}
 
 type ChatContentProps = {
   name: string;
-  messages: MessageList[];
+  messages: Message[];
 };
 
 export const ChatContent = ({ name, messages }: ChatContentProps) => {
-  return messages.map(({ sentMessage, contents }) => (
+  return messages.map(({ id, content, role }, i) => (
     <Box>
-      <Flex justifyContent={"end"} gap={8}>
-        <SpeechBubble message={sentMessage.message} file={sentMessage.file} />
-        <Avatar name={name} />
-      </Flex>
-      <Flex justifyContent={"start"} gap={8}>
-        <Avatar />
-        <VStack alignItems={"start"}>
-          {contents.map(({ id, message, file }, i) =>
-            i === 0 ? (
-              <SpeechBubble key={id} message={message} isLeft file={file} />
+      {role === "user" ? (
+        <Flex justifyContent={"end"} gap={8}>
+          <SpeechBubble message={content} />
+          <Avatar name={name} />
+        </Flex>
+      ) : role === "assistant" ? (
+        <Flex justifyContent={"start"} gap={8}>
+          <Avatar />
+          <VStack alignItems={"start"}>
+            {messages[i - 1].role !== "assistant" ? (
+              <SpeechBubble key={id} message={content} isLeft />
             ) : (
-              message && <ChatBox message={message} />
-            )
-          )}
-        </VStack>
-      </Flex>
+              <ChatBox message={content} />
+            )}
+          </VStack>
+        </Flex>
+      ) : (
+        <div></div>
+      )}
     </Box>
   ));
 };

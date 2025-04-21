@@ -300,7 +300,7 @@ def chat():
     # 会話チェーンを作成
     llm = ChatGoogleGenerativeAI(
         temperature=0.7,
-        model_name="gemini-2.0-flash-001",  # または使用したいモデル
+        model="gemini-2.0-flash-001",  # または使用したいモデル
         google_api_key=GOOGLE_API_KEY,
     )
 

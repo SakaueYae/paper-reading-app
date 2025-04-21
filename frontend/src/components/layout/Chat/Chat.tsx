@@ -1,29 +1,30 @@
-import { Box, Button, Input, BoxProps } from "@chakra-ui/react";
+import { Box, Button, Input } from "@chakra-ui/react";
 import { FC, useRef, useState } from "react";
 import { InputGroup } from "../../ui/chakraui/input-group";
 import { Field } from "../../ui/chakraui/field";
 import { LuSearch } from "react-icons/lu";
 import { IoSend } from "react-icons/io5";
 import { ChatHeader } from "./ChatHeader";
-import { ChatContent, MessageList } from "./ChatContent";
+import { ChatContent } from "./ChatContent";
 import { useAuthContext } from "@/components/context/AuthProvider";
 import { FileUploadField } from "@/components/ui/FileUploadField";
+import { FileMessageList, FileChatContent } from "./FileChatContent";
+import { Message } from "./ChatContent";
 
 type ChatProps = {
-  isFirst?: boolean;
-  messages: MessageList[];
-  onClick: (value: string) => void;
+  fileMessageList?: FileMessageList;
+  messages: Message[];
+  onSubmit: (value: string) => void;
   onFileUpload: (file: File) => void;
   signOut: () => void;
 };
 
-export const Chat: FC<ChatProps & BoxProps> = ({
-  isFirst,
+export const Chat: FC<ChatProps> = ({
+  fileMessageList,
   messages,
-  onClick,
+  onSubmit,
   onFileUpload,
   signOut,
-  ...props
 }) => {
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
@@ -35,14 +36,14 @@ export const Chat: FC<ChatProps & BoxProps> = ({
       if (ref.current) {
         ref.current.value = "";
       }
-      onClick(value);
+      onSubmit(value);
     } else {
       setIsError(true);
     }
   };
 
   return (
-    <Box p={8} {...props}>
+    <Box p={8} h={"100%"}>
       <Box
         h={"100%"}
         display={"flex"}
@@ -52,7 +53,7 @@ export const Chat: FC<ChatProps & BoxProps> = ({
       >
         <ChatHeader name={email} signOut={signOut} />
 
-        {isFirst ? (
+        {!fileMessageList ? (
           <Box
             flex={1}
             overflow={"auto"}
@@ -64,6 +65,7 @@ export const Chat: FC<ChatProps & BoxProps> = ({
         ) : (
           <>
             <Box flex={1} overflow={"auto"}>
+              <FileChatContent name={email} messages={fileMessageList} />
               <ChatContent name={email} messages={messages} />
             </Box>
             <Field invalid={isError} errorText={"テキストを入力してください。"}>

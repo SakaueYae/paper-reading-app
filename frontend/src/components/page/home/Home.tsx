@@ -4,18 +4,13 @@ import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { MessageList } from "@/components/layout/Chat/ChatContent";
 import { uploadFile } from "./models/uploadFile";
 import { useAuthContext } from "@/components/context/AuthProvider";
 import { getChatSessions } from "./models/getChatSessions";
 import { getMessages } from "./models/getMessages";
-
-interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant" | "system";
-  created_at: string;
-}
+import { FileMessageList } from "@/components/layout/Chat/FileChatContent";
+import { Message } from "@/components/layout/Chat/ChatContent";
+import { sendMessage } from "./models/sentMessage";
 
 interface ChatSession {
   id: string;
@@ -25,23 +20,12 @@ interface ChatSession {
 }
 
 export const Home = () => {
-  const defaultMessages: MessageList = {
-    sentMessage: {
-      id: "null",
-    },
-    contents: [
-      {
-        id: "null",
-      },
-    ],
-  };
-  const [messages, setMessages] = useState<MessageList[]>([defaultMessages]);
-  const [message, setMessage] = useState("");
-  // const [messages, setMessages] = useState<Message[]>([]);
+  const [fileMessageList, setFileMessageList] = useState<FileMessageList>();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toggleColorMode } = useColorMode();
   const mockArray = [
     {
@@ -52,14 +36,76 @@ export const Home = () => {
   ];
   const { user, accessToken, refreshToken, signOut } = useAuthContext();
 
+  const handleGetChatSessions = async () => {
+    if (!(accessToken && refreshToken)) return;
+    const sessions = await getChatSessions(accessToken, refreshToken);
+    setSessions(sessions ?? null);
+    // 初回ロード時に最新のセッションがあれば選択
+    if (sessions.length > 0 && !currentSession) {
+      setCurrentSession(sessions[0].id);
+      handleGetMessages(sessions[0].id);
+    }
+  };
+
   const handleGetMessages = async (id: string) => {
     if (!(accessToken && refreshToken)) return;
     const data = await getMessages(id, accessToken, refreshToken);
-    if (!data) return;
+    if (typeof data === "string") return;
     setMessages(data);
     // setTimeout(() => {
     //   scrollToBottom();
     // }, 100);
+  };
+
+  const handleSendMessage = async (message: string) => {
+    // ユーザーメッセージをUIに追加
+    const userMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content: message,
+      role: "user",
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    // scrollToBottom();
+    setIsLoading(true);
+
+    try {
+      if (!(accessToken && refreshToken)) return;
+
+      const sessionId = await sendMessage(
+        userMessage.content,
+        currentSession,
+        accessToken,
+        refreshToken
+      );
+
+      if (sessionId) {
+        // 新しいセッションの場合、セッションIDを更新
+        if (!currentSession) {
+          setCurrentSession(sessionId);
+          handleGetChatSessions(); // セッション一覧を更新
+        }
+
+        console.log(sessionId);
+
+        // サーバーから最新のメッセージを取得
+        handleGetMessages(sessionId);
+      }
+    } catch (error) {
+      console.error("メッセージ送信エラー:", error);
+      // エラーメッセージを表示
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        content: "メッセージの送信に失敗しました。もう一度お試しください。",
+        role: "system",
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      // scrollToBottom();
+    }
   };
 
   // 新しいセッションを作成
@@ -72,22 +118,13 @@ export const Home = () => {
     if (!(accessToken && refreshToken)) return;
     const data = await uploadFile(file, accessToken, refreshToken);
     if (typeof data === "string") return;
-    setMessages([data]);
+    setFileMessageList(data);
   };
 
   // 初回ロード時にセッション一覧を取得
   useEffect(() => {
     (async () => {
-      if (user && accessToken && refreshToken) {
-        const sessions = await getChatSessions(accessToken, refreshToken);
-        setSessions(sessions ?? null);
-        console.log(sessions);
-        // 初回ロード時に最新のセッションがあれば選択
-        if (sessions.length > 0 && !currentSession) {
-          setCurrentSession(sessions[0].id);
-          handleGetMessages(sessions[0].id);
-        }
-      }
+      handleGetChatSessions();
     })();
   }, [user, accessToken]);
 
@@ -112,14 +149,16 @@ export const Home = () => {
         maxW={300}
         display={{ base: "none", md: "flex" }}
       />
-      <Chat
-        onClick={(value) => console.log(value)}
-        onFileUpload={handleFileUpload}
-        signOut={signOut}
-        isFirst={messages[0].sentMessage.id === "null"}
-        flex={4}
-        messages={messages}
-      />
+      <Box flex={4} h={"100%"}>
+        <Chat
+          onSubmit={handleSendMessage}
+          onFileUpload={handleFileUpload}
+          signOut={signOut}
+          fileMessageList={fileMessageList}
+          messages={messages}
+        />
+      </Box>
+
       {/* Home
       <Button onClick={toggleColorMode}>Toggle Mode</Button> */}
     </Box>

@@ -1,12 +1,11 @@
 import axios, { isAxiosError } from "axios";
-import { MessageList } from "@/components/layout/Chat/ChatContent";
-import { fileUploadText } from "./text";
+import { FileMessageList } from "@/components/layout/Chat/FileChatContent";
 
 export const uploadFile = async (
   file: File,
   accessToken: string,
   refreshToken: string
-): Promise<MessageList | string> => {
+): Promise<FileMessageList | string> => {
   try {
     const formData = new FormData();
     formData.append(file.name, file);
@@ -25,19 +24,13 @@ export const uploadFile = async (
           name: file.name,
         },
       },
-      contents: [
-        {
-          id: "upload",
-          file: {
-            name: res.data.file_name,
-            link: res.data.download_url,
-          },
+      contents: {
+        id: "upload",
+        file: {
+          name: res.data.file_name,
+          link: res.data.download_url,
         },
-        {
-          id: "upload_text",
-          message: fileUploadText,
-        },
-      ],
+      },
     };
   } catch (e) {
     if (isAxiosError(e)) return e.message;
