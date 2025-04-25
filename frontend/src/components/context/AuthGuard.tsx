@@ -6,5 +6,7 @@ export const AuthGuard = ({ children }: { children: JSX.Element }) => {
 
   if (isLoading) return <div>Now Loading...</div>;
 
+  console.log(user);
+
   return user ? children : <Navigate to="/signin" replace />;
 };

@@ -1,3 +1,4 @@
+import { Spinner, VStack, Text } from "@chakra-ui/react";
 import {
   FileUploadDropzone,
   FileUploadList,
@@ -5,10 +6,14 @@ import {
 } from "./chakraui/file-upload";
 
 type FileUploadProps = {
+  isLoading?: boolean;
   onFileUpload: (file: File) => void;
 };
 
-export const FileUploadField = ({ onFileUpload }: FileUploadProps) => {
+export const FileUploadField = ({
+  isLoading = false,
+  onFileUpload,
+}: FileUploadProps) => {
   return (
     <FileUploadRoot
       maxW="xl"
@@ -22,6 +27,12 @@ export const FileUploadField = ({ onFileUpload }: FileUploadProps) => {
         description=".pdf up to 5MB"
       />
       <FileUploadList />
+      {isLoading && (
+        <VStack colorPalette="teal">
+          <Spinner color="colorPalette.600" />
+          <Text color="colorPalette.600">Loading...</Text>
+        </VStack>
+      )}
     </FileUploadRoot>
   );
 };

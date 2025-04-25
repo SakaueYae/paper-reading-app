@@ -1,12 +1,12 @@
 import base64
 import datetime
 import json
+import time
 from typing import Optional
 import uuid
 from flask import Flask, jsonify, request
 import pymupdf
 from langchain_community.document_loaders import PyMuPDFLoader
-from io import BytesIO
 import pymupdf4llm
 from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
@@ -172,6 +172,7 @@ def initialize_memory_from_history(messages):
 
 @app.route("/api/pdf", methods=["POST"])
 def upload_pdf():
+    # start = time.time()
     user_id = get_token_and_set_session(request.headers)
 
     if not user_id:
@@ -205,7 +206,6 @@ def upload_pdf():
                 if len(text) >= 5000:
                     while i < len(text):
                         selectedText = text[i : i + 4000]
-                        # print(f"{i}:{selectedText}")
                         ja += translator.translate(selectedText)
                         i += 4000
                 else:
@@ -216,18 +216,10 @@ def upload_pdf():
 
         doc.subset_fonts()
         # doc.ez_save("output.pdf")
-        pdf_bytes = doc.write()
+        pdf_bytes = doc.write(garbage=4, deflate=True, compression_effort=100)
         doc.close()
-
-    # osによってtmpディレクトリがあるかどうかが異なる
-    if platform.system() == "Windows":
-        temp_dir = "tmp"
-        os.makedirs(temp_dir, exist_ok=True)
-    else:
-        temp_dir = "/tmp"
-
-    # 一時ファイルを作成
-    fd, tmp_path = tempfile.mkstemp(suffix=".pdf", dir=temp_dir)
+        # print(f"write took: {time.time() - start:.2f}s")
+        # print(len(pdf_bytes))
 
     # 現在の日時をタイムスタンプに変換（例: 20250412_143015）
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -239,10 +231,6 @@ def upload_pdf():
     upload_path = f"{user_id}/{unique_name}"
 
     try:
-        # ファイルに書き込み
-        with os.fdopen(fd, "wb") as tmp:
-            tmp.write(pdf_bytes)
-
         # Supabaseにアップロード
         supabase.storage.from_("file").upload(
             path=upload_path,
@@ -263,11 +251,6 @@ def upload_pdf():
 
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500
-
-    finally:
-        # ファイルを削除
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
 
 
 @app.route("/api/chat", methods=["POST"])

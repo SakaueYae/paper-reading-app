@@ -12,6 +12,7 @@ import { FileMessageList, FileChatContent } from "./FileChatContent";
 import { Message } from "./ChatContent";
 
 type ChatProps = {
+  isLoading: boolean;
   fileMessageList?: FileMessageList;
   messages: Message[];
   onSubmit: (value: string) => void;
@@ -20,6 +21,7 @@ type ChatProps = {
 };
 
 export const Chat: FC<ChatProps> = ({
+  isLoading,
   fileMessageList,
   messages,
   onSubmit,
@@ -60,7 +62,10 @@ export const Chat: FC<ChatProps> = ({
             display={"flex"}
             alignItems={"center"}
           >
-            <FileUploadField onFileUpload={onFileUpload} />
+            <FileUploadField
+              isLoading={isLoading}
+              onFileUpload={onFileUpload}
+            />
           </Box>
         ) : (
           <>

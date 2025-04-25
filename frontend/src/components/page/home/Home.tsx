@@ -116,7 +116,9 @@ export const Home = () => {
 
   const handleFileUpload = async (file: File) => {
     if (!(accessToken && refreshToken)) return;
+    setIsLoading(true);
     const data = await uploadFile(file, accessToken, refreshToken);
+    setIsLoading(false);
     if (typeof data === "string") return;
     setFileMessageList(data);
   };
@@ -151,6 +153,7 @@ export const Home = () => {
       />
       <Box flex={4} h={"100%"}>
         <Chat
+          isLoading={isLoading}
           onSubmit={handleSendMessage}
           onFileUpload={handleFileUpload}
           signOut={signOut}
@@ -164,3 +167,4 @@ export const Home = () => {
     </Box>
   );
 };
+
