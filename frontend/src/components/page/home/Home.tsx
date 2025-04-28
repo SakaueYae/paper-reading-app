@@ -2,26 +2,28 @@ import { useColorMode } from "@/components/ui/chakraui/color-mode";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { uploadFile } from "./models/uploadFile";
 import { useAuthContext } from "@/components/context/AuthProvider";
 import { getChatSessions } from "./models/getChatSessions";
 import { getMessages } from "./models/getMessages";
-import { FileMessageList } from "@/components/layout/Chat/FileChatContent";
 import { Message } from "@/components/layout/Chat/ChatContent";
 import { sendMessage } from "./models/sentMessage";
 
-interface ChatSession {
+export interface ChatSession {
   id: string;
   title: string;
   created_at: string;
   updated_at: string;
 }
 
+const defaultValue: Message = {
+  messagesHistory: [],
+};
+
 export const Home = () => {
-  const [fileMessageList, setFileMessageList] = useState<FileMessageList>();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message>(defaultValue);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,12 +41,8 @@ export const Home = () => {
   const handleGetChatSessions = async () => {
     if (!(accessToken && refreshToken)) return;
     const sessions = await getChatSessions(accessToken, refreshToken);
+    if (!sessions) return;
     setSessions(sessions ?? null);
-    // 初回ロード時に最新のセッションがあれば選択
-    if (sessions.length > 0 && !currentSession) {
-      setCurrentSession(sessions[0].id);
-      handleGetMessages(sessions[0].id);
-    }
   };
 
   const handleGetMessages = async (id: string) => {
@@ -60,13 +58,17 @@ export const Home = () => {
   const handleSendMessage = async (message: string) => {
     // ユーザーメッセージをUIに追加
     const userMessage: Message = {
-      id: `temp-${Date.now()}`,
-      content: message,
-      role: "user",
-      created_at: new Date().toISOString(),
+      messagesHistory: [
+        {
+          id: `temp-${Date.now()}`,
+          content: message,
+          role: "user",
+          created_at: new Date().toISOString(),
+        },
+      ],
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => ({ ...prev, userMessage }));
     // scrollToBottom();
     setIsLoading(true);
 
@@ -74,7 +76,7 @@ export const Home = () => {
       if (!(accessToken && refreshToken)) return;
 
       const sessionId = await sendMessage(
-        userMessage.content,
+        userMessage.messagesHistory[0].content,
         currentSession,
         accessToken,
         refreshToken
@@ -96,12 +98,16 @@ export const Home = () => {
       console.error("メッセージ送信エラー:", error);
       // エラーメッセージを表示
       const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        content: "メッセージの送信に失敗しました。もう一度お試しください。",
-        role: "system",
-        created_at: new Date().toISOString(),
+        messagesHistory: [
+          {
+            id: `error-${Date.now()}`,
+            content: "メッセージの送信に失敗しました。もう一度お試しください。",
+            role: "system",
+            created_at: new Date().toISOString(),
+          },
+        ],
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => ({ ...prev, errorMessage }));
     } finally {
       setIsLoading(false);
       // scrollToBottom();
@@ -111,7 +117,7 @@ export const Home = () => {
   // 新しいセッションを作成
   const createNewSession = () => {
     setCurrentSession(null);
-    setMessages([]);
+    setMessages(defaultValue);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -120,7 +126,7 @@ export const Home = () => {
     const data = await uploadFile(file, accessToken, refreshToken);
     setIsLoading(false);
     if (typeof data === "string") return;
-    setFileMessageList(data);
+    setMessages((prev) => ({ ...prev, file: data }));
   };
 
   // 初回ロード時にセッション一覧を取得
@@ -129,6 +135,16 @@ export const Home = () => {
       handleGetChatSessions();
     })();
   }, [user, accessToken]);
+
+  useEffect(() => {
+    (async () => {
+      if (currentSession) {
+        handleGetMessages(currentSession);
+      } else {
+        setMessages(defaultValue);
+      }
+    })();
+  }, [currentSession]);
 
   useEffect(() => {
     (async () => {
@@ -145,11 +161,12 @@ export const Home = () => {
   return (
     <Box display={"flex"} h={"100%"} color={"gray.600"}>
       <Sidebar
-        chats={mockArray}
-        onChatClick={(id) => console.log(id)}
+        chats={sessions}
+        onChatClick={(id) => setCurrentSession(id)}
         flex={1}
         maxW={300}
         display={{ base: "none", md: "flex" }}
+        onStartNewChat={createNewSession}
       />
       <Box flex={4} h={"100%"}>
         <Chat
@@ -157,7 +174,6 @@ export const Home = () => {
           onSubmit={handleSendMessage}
           onFileUpload={handleFileUpload}
           signOut={signOut}
-          fileMessageList={fileMessageList}
           messages={messages}
         />
       </Box>
@@ -167,4 +183,3 @@ export const Home = () => {
     </Box>
   );
 };
-

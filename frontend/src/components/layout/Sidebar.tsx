@@ -3,21 +3,18 @@ import { Logo } from "../ui/Logo";
 import { Button } from "../ui/chakraui/button";
 import { IoAddOutline } from "react-icons/io5";
 import { FC } from "react";
-
-type ChatHistory = {
-  id: string;
-  date: string;
-  title: string;
-};
+import { ChatSession } from "../page/home/Home";
 
 export type SidebarProps = {
-  chats: ChatHistory[];
+  chats: ChatSession[];
   onChatClick: (id: string) => void;
+  onStartNewChat: () => void;
 };
 
 export const Sidebar: FC<SidebarProps & BoxProps> = ({
   chats,
   onChatClick,
+  onStartNewChat,
   ...props
 }) => {
   return (
@@ -33,7 +30,7 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
     >
       <Logo type="sidebar" />
       <VStack gap={1} alignItems={"start"} mt={4} flex={1}>
-        {chats.map(({ id, date, title }) => (
+        {chats.map(({ id, created_at, title }) => (
           <Box
             borderRadius={"10px"}
             w={"100%"}
@@ -45,7 +42,7 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
             onClick={() => onChatClick(id)}
           >
             <Heading as="h3" size="md">
-              {date}
+              {created_at}
             </Heading>
             <Text>{title}</Text>
           </Box>
@@ -58,6 +55,7 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
         _hover={{
           bgColor: "gray.200",
         }}
+        onClick={onStartNewChat}
       >
         <IoAddOutline />
         Start new Chat

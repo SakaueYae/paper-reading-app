@@ -24,7 +24,7 @@ const fileUploadText =
 
 export const FileChatContent = ({ name, messages }: ChatContentProps) => {
   return (
-    <Box>
+    <Box mb={8}>
       <Flex justifyContent={"end"} gap={8}>
         <SpeechBubble file={messages.sentMessage.file} />
         <Avatar name={name} />

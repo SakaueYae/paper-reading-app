@@ -8,13 +8,11 @@ import { ChatHeader } from "./ChatHeader";
 import { ChatContent } from "./ChatContent";
 import { useAuthContext } from "@/components/context/AuthProvider";
 import { FileUploadField } from "@/components/ui/FileUploadField";
-import { FileMessageList, FileChatContent } from "./FileChatContent";
 import { Message } from "./ChatContent";
 
 type ChatProps = {
   isLoading: boolean;
-  fileMessageList?: FileMessageList;
-  messages: Message[];
+  messages: Message;
   onSubmit: (value: string) => void;
   onFileUpload: (file: File) => void;
   signOut: () => void;
@@ -22,7 +20,6 @@ type ChatProps = {
 
 export const Chat: FC<ChatProps> = ({
   isLoading,
-  fileMessageList,
   messages,
   onSubmit,
   onFileUpload,
@@ -55,7 +52,7 @@ export const Chat: FC<ChatProps> = ({
       >
         <ChatHeader name={email} signOut={signOut} />
 
-        {!fileMessageList ? (
+        {messages.messagesHistory.length == 0 && !messages?.file ? (
           <Box
             flex={1}
             overflow={"auto"}
@@ -70,7 +67,6 @@ export const Chat: FC<ChatProps> = ({
         ) : (
           <>
             <Box flex={1} overflow={"auto"}>
-              <FileChatContent name={email} messages={fileMessageList} />
               <ChatContent name={email} messages={messages} />
             </Box>
             <Field invalid={isError} errorText={"テキストを入力してください。"}>

@@ -5,7 +5,7 @@ export const getMessages = async (
   sessionId: string,
   accessToken: string,
   refreshToken: string
-): Promise<Message[] | string> => {
+): Promise<Message | string> => {
   try {
     const response = await axios.get(`/api/sessions/${sessionId}/messages`, {
       headers: {
@@ -14,7 +14,9 @@ export const getMessages = async (
       },
     });
 
-    return response.data.messages;
+    return {
+      messagesHistory: response.data.messages,
+    };
   } catch (error) {
     if (isAxiosError(error)) {
       console.error("メッセージ取得エラー:", error);
