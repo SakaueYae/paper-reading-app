@@ -9,21 +9,28 @@ import { ChatContent } from "./ChatContent";
 import { useAuthContext } from "@/components/context/AuthProvider";
 import { FileUploadField } from "@/components/ui/FileUploadField";
 import { Message } from "./ChatContent";
+import { ChatSession } from "@/components/page/home/Home";
 
 type ChatProps = {
   isLoading: boolean;
   messages: Message;
+  chats: ChatSession[];
   onSubmit: (value: string) => void;
   onFileUpload: (file: File) => void;
   signOut: () => void;
+  onStartNewChat: () => void;
+  onChatClick: (id: string) => void;
 };
 
 export const Chat: FC<ChatProps> = ({
   isLoading,
   messages,
+  chats,
   onSubmit,
   onFileUpload,
   signOut,
+  onStartNewChat,
+  onChatClick,
 }) => {
   const [isError, setIsError] = useState<boolean>(false);
   const ref = useRef<HTMLInputElement>(null);
@@ -50,7 +57,13 @@ export const Chat: FC<ChatProps> = ({
         gap={8}
         justifyContent={"space-between"}
       >
-        <ChatHeader name={email} signOut={signOut} />
+        <ChatHeader
+          name={email}
+          chats={chats}
+          signOut={signOut}
+          onStartNewChat={onStartNewChat}
+          onChatClick={onChatClick}
+        />
 
         {messages.messagesHistory.length == 0 && !messages?.file ? (
           <Box

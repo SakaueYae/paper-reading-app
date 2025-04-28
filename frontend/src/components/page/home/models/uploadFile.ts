@@ -5,7 +5,7 @@ export const uploadFile = async (
   file: File,
   accessToken: string,
   refreshToken: string
-): Promise<FileMessageList | string> => {
+) => {
   try {
     const formData = new FormData();
     formData.append(file.name, file);
@@ -17,7 +17,7 @@ export const uploadFile = async (
       },
     });
 
-    return {
+    const fileMessageList: FileMessageList = {
       sentMessage: {
         id: "file",
         file: {
@@ -32,6 +32,10 @@ export const uploadFile = async (
         },
       },
     };
+
+    const sessionId = res.data.session_id;
+
+    return { fileMessageList, sessionId };
   } catch (e) {
     if (isAxiosError(e)) return e.message;
     else return "エラーが発生しました。";

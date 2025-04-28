@@ -2,9 +2,9 @@ import base64
 import datetime
 import json
 import time
-from typing import Optional
 import uuid
 from flask import Flask, jsonify, request
+from langchain_text_splitters import CharacterTextSplitter
 import pymupdf
 from langchain_community.document_loaders import PyMuPDFLoader
 import pymupdf4llm
@@ -14,9 +14,17 @@ from supabase import create_client, Client
 import os
 import tempfile
 import platform
-from langchain.chains import ConversationChain
+
+# from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.chains import ConversationalRetrievalChain, create_retrieval_chain
+from langchain.schema import Document
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_community.chat_models import ChatOpenAI
+from langchain.chains.history_aware_retriever import create_history_aware_retriever
+from langchain.chains.combine_documents import create_stuff_documents_chain
 
 # .env ファイルから環境変数を読み込み
 load_dotenv()
@@ -68,17 +76,6 @@ def parse_jwt_payload(token):
         return None
 
 
-# JWTトークンからユーザー情報を取得
-def get_user_from_token(token):
-    try:
-        # セッションを設定
-        response = supabase.auth.get_user(token)
-        return response.user
-    except Exception as e:
-        print(f"Error getting user: {e}")
-        return None
-
-
 # 勝手に実装
 def get_token_and_set_session(headers):
     try:
@@ -111,7 +108,7 @@ def get_token_and_set_session(headers):
 
 
 # チャットセッションを作成または取得
-def get_or_create_chat_session(user_id, session_id=None):
+def get_or_create_chat_session(user_id, session_id=None, title: str = None):
     if session_id:
         # 既存のセッションを取得
         response = (
@@ -125,7 +122,7 @@ def get_or_create_chat_session(user_id, session_id=None):
             return response.data[0]
 
     # 新しいセッションを作成
-    session_title = f"チャットセッション {uuid.uuid4().hex[:8]}"
+    session_title = title or f"チャットセッション {uuid.uuid4().hex[:8]}"
     response = (
         supabase.table("chat_sessions")
         .insert({"user_id": user_id, "title": session_title})
@@ -145,6 +142,17 @@ def get_chat_history(session_id):
         .execute()
     )
     return response.data
+
+
+def get_pdf_text(session_id):
+    response = (
+        supabase.table("chat_sessions")
+        .select("document_text")
+        .eq("id", session_id)
+        .execute()
+    )
+
+    return response.data[0]["document_text"]
 
 
 # メッセージを保存
@@ -168,6 +176,67 @@ def initialize_memory_from_history(messages):
             memory.chat_memory.add_ai_message(msg["content"])
 
     return memory
+
+
+def build_chain(text: str, memory: ConversationBufferMemory):
+    char_text_splitter = CharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=0,
+    )
+    doc = char_text_splitter.split_text(text)
+    print(doc)
+
+    # Load embeddings model
+    embeddings = GoogleGenerativeAIEmbeddings(
+        google_api_key=GOOGLE_API_KEY, model="models/embedding-001"
+    )
+    # PDFファイルのテキストを注入して疑似的にファイル検索を行う
+    pdf_search = FAISS.from_texts(
+        doc,
+        embeddings,
+        # collection_name=file_name,
+    )
+
+    retriever_prompt = ChatPromptTemplate.from_messages(
+        [
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+            (
+                "user",
+                "Given the above conversation, generate a search query to look up information relevant to the conversation",
+            ),
+        ]
+    )
+
+    llm = ChatGoogleGenerativeAI(
+        temperature=0.7,
+        model="gemini-2.0-flash-001",  # または使用したいモデル
+        google_api_key=GOOGLE_API_KEY,
+    )  # または使用したいモデル
+
+    history_aware_retriever = create_history_aware_retriever(
+        llm,
+        prompt=retriever_prompt,
+        retriever=pdf_search.as_retriever(),
+    )
+
+    # ステップ2: 検索結果を使った回答生成チェーンを作成
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "Answer the user's question based on the following context:\n\n{context}",
+            ),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+        ]
+    )
+
+    qa_chain = create_stuff_documents_chain(llm, prompt)
+
+    retrieval_chain = create_retrieval_chain(history_aware_retriever, qa_chain)
+
+    return retrieval_chain
 
 
 @app.route("/api/pdf", methods=["POST"])
@@ -196,13 +265,17 @@ def upload_pdf():
         translator = GoogleTranslator(source="auto", target="ja")
         ocg = doc.add_ocg("Japanese", on="True")
 
-        for page in doc:
+        file_text = ""
+
+        for page_num in range(len(doc)):
+            page = doc[page_num]
             blocks = page.get_text("blocks", flags=textflags)
             for block in blocks:
                 bbox = block[:4]
                 text = block[4]
                 ja = ""
                 i = 0
+                file_text += text
                 if len(text) >= 5000:
                     while i < len(text):
                         selectedText = text[i : i + 4000]
@@ -215,7 +288,6 @@ def upload_pdf():
                     page.insert_htmlbox(bbox, ja, oc=ocg)
 
         doc.subset_fonts()
-        # doc.ez_save("output.pdf")
         pdf_bytes = doc.write(garbage=4, deflate=True, compression_effort=100)
         doc.close()
         # print(f"write took: {time.time() - start:.2f}s")
@@ -231,6 +303,24 @@ def upload_pdf():
     upload_path = f"{user_id}/{unique_name}"
 
     try:
+        session = get_or_create_chat_session(user_id, session_id=None, title=file_name)
+        session_id = session["id"]
+        (
+            supabase.table("chat_sessions")
+            .update({"document_text": file_text})
+            .eq("id", session_id)
+            .execute()
+        )
+
+        # Supabaseへファイル名と決まり文句を保存
+        save_message(session_id, file.name, "user")
+        save_message(session_id, unique_name, "assistant")
+        save_message(
+            session_id,
+            "上記のアイコンをクリックすると、翻訳ファイルをダウンロードできます。（有効期限5分）\n続けてファイル内容についての質問があればテキストボックスに入力して送信してください。",
+            "assistant",
+        )
+
         # Supabaseにアップロード
         supabase.storage.from_("file").upload(
             path=upload_path,
@@ -247,6 +337,7 @@ def upload_pdf():
             "status": "success",
             "download_url": signed_url,
             "file_name": unique_name,
+            "session_id": session_id,
         }
 
     except Exception as e:
@@ -280,23 +371,25 @@ def chat():
     # LangChainのメモリを初期化
     memory = initialize_memory_from_history(chat_history)
 
-    # 会話チェーンを作成
-    llm = ChatGoogleGenerativeAI(
-        temperature=0.7,
-        model="gemini-2.0-flash-001",  # または使用したいモデル
-        google_api_key=GOOGLE_API_KEY,
+    pdf_text = get_pdf_text(session_id)
+
+    if not pdf_text:
+        return jsonify(
+            {"status": "error", "message": "PDFがアップロードされていません"}
+        ), 400
+
+    pdf_chat = build_chain(pdf_text, memory)
+    # AIの応答を生成
+    result = pdf_chat.invoke(
+        {"input": message, "chat_history": memory.chat_memory.messages}
     )
 
-    conversation = ConversationChain(llm=llm, memory=memory, verbose=True)
-
-    # AIの応答を生成
-    ai_response = conversation.predict(input=message)
-
     # AIの応答を保存
-    save_message(session_id, ai_response, "assistant")
+    save_message(session_id, result["answer"], "assistant")
+    print(f"AI response: {result['answer']}")
 
     return jsonify(
-        {"status": "success", "response": ai_response, "session_id": session_id}
+        {"status": "success", "response": result["answer"], "session_id": session_id}
     )
 
 

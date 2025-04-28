@@ -29,7 +29,7 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
       {...props}
     >
       <Logo type="sidebar" />
-      <VStack gap={1} alignItems={"start"} mt={4} flex={1}>
+      <VStack gap={1} alignItems={"start"} mt={4} flex={1} overflow={"auto"}>
         {chats.map(({ id, created_at, title }) => (
           <Box
             borderRadius={"10px"}

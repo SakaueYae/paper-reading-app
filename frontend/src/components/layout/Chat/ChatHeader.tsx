@@ -10,10 +10,14 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Drawer } from "@/components/ui/Drawer";
 import { Modal } from "@/components/ui/Modal";
 import { useState } from "react";
+import { ChatSession } from "@/components/page/home/Home";
 
 type ChatHeaderProps = {
   name: string;
+  chats: ChatSession[];
   signOut: () => void;
+  onStartNewChat: () => void;
+  onChatClick: (id: string) => void;
 };
 
 const initialState = {
@@ -21,7 +25,13 @@ const initialState = {
   resolve: () => {},
 };
 
-export const ChatHeader = ({ name, signOut }: ChatHeaderProps) => {
+export const ChatHeader = ({
+  name,
+  chats,
+  signOut,
+  onStartNewChat,
+  onChatClick,
+}: ChatHeaderProps) => {
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     resolve: (isConfirmed: boolean) => void;
@@ -43,9 +53,10 @@ export const ChatHeader = ({ name, signOut }: ChatHeaderProps) => {
   return (
     <HStack justifyContent={"space-between"}>
       <Drawer
-        chats={[]}
-        onChatClick={(id) => console.log(id)}
+        chats={chats}
+        onChatClick={onChatClick}
         display={{ md: "none" }}
+        onStartNewChat={onStartNewChat}
       />
       <HStack justifyContent={"end"}>
         <Box>

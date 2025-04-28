@@ -9,7 +9,7 @@ import { useAuthContext } from "@/components/context/AuthProvider";
 import { getChatSessions } from "./models/getChatSessions";
 import { getMessages } from "./models/getMessages";
 import { Message } from "@/components/layout/Chat/ChatContent";
-import { sendMessage } from "./models/sentMessage";
+import { sendMessage } from "./models/sendMessage";
 
 export interface ChatSession {
   id: string;
@@ -29,13 +29,6 @@ export const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   // const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toggleColorMode } = useColorMode();
-  const mockArray = [
-    {
-      id: "1",
-      date: "2024-12-20",
-      title: "研究",
-    },
-  ];
   const { user, accessToken, refreshToken, signOut } = useAuthContext();
 
   const handleGetChatSessions = async () => {
@@ -126,7 +119,8 @@ export const Home = () => {
     const data = await uploadFile(file, accessToken, refreshToken);
     setIsLoading(false);
     if (typeof data === "string") return;
-    setMessages((prev) => ({ ...prev, file: data }));
+    setMessages((prev) => ({ ...prev, file: data.fileMessageList }));
+    setCurrentSession(data.sessionId);
   };
 
   // 初回ロード時にセッション一覧を取得
@@ -175,6 +169,9 @@ export const Home = () => {
           onFileUpload={handleFileUpload}
           signOut={signOut}
           messages={messages}
+          chats={sessions}
+          onStartNewChat={createNewSession}
+          onChatClick={(id) => setCurrentSession(id)}
         />
       </Box>
 
