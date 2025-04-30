@@ -1,22 +1,49 @@
-import { Box, Heading, Text, VStack, BoxProps } from "@chakra-ui/react";
+import { Box, VStack, BoxProps } from "@chakra-ui/react";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/chakraui/button";
 import { IoAddOutline } from "react-icons/io5";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { ChatSession } from "../page/home/Home";
+import { ChatList } from "../ui/ChatList";
+import { Modal } from "../ui/Modal";
 
 export type SidebarProps = {
+  currentSession: string | null;
   chats: ChatSession[];
   onChatClick: (id: string) => void;
   onStartNewChat: () => void;
+  onDeleteClick: (id: string) => void;
+};
+
+const initialState = {
+  isOpen: false,
+  resolve: () => {},
 };
 
 export const Sidebar: FC<SidebarProps & BoxProps> = ({
+  currentSession,
   chats,
   onChatClick,
   onStartNewChat,
+  onDeleteClick,
   ...props
 }) => {
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    resolve: (ok: boolean) => void;
+  }>(initialState);
+  const handleDeleteModal = async (id: string) => {
+    const ok = await new Promise((resolve) => {
+      setModalState({ isOpen: true, resolve });
+    });
+    if (ok) {
+      onDeleteClick(id);
+      setModalState(initialState);
+    } else {
+      setModalState(initialState);
+    }
+  };
+
   return (
     <Box
       as="nav"
@@ -31,21 +58,16 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
       <Logo type="sidebar" />
       <VStack gap={1} alignItems={"start"} mt={4} flex={1} overflow={"auto"}>
         {chats.map(({ id, created_at, title }) => (
-          <Box
-            borderRadius={"10px"}
-            w={"100%"}
-            p={2}
-            cursor={"pointer"}
-            _hover={{
-              bgColor: "gray.200",
+          <ChatList
+            key={id}
+            isSelected={currentSession === id}
+            created_at={created_at}
+            title={title}
+            onChatClick={() => onChatClick(id)}
+            onDeleteClick={() => {
+              handleDeleteModal(id);
             }}
-            onClick={() => onChatClick(id)}
-          >
-            <Heading as="h3" size="md">
-              {created_at}
-            </Heading>
-            <Text>{title}</Text>
-          </Box>
+          />
         ))}
       </VStack>
       <Button
@@ -60,6 +82,12 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
         <IoAddOutline />
         Start new Chat
       </Button>
+      <Modal
+        isOpen={modalState.isOpen}
+        title="Delete Session"
+        body="Are you sure to delete this session?"
+        onButtonClick={modalState.resolve}
+      />
     </Box>
   );
 };

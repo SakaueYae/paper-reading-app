@@ -10,6 +10,7 @@ import { getChatSessions } from "./models/getChatSessions";
 import { getMessages } from "./models/getMessages";
 import { Message } from "@/components/layout/Chat/ChatContent";
 import { sendMessage } from "./models/sendMessage";
+import { deleteSession } from "./models/deleteSession";
 
 export interface ChatSession {
   id: string;
@@ -123,6 +124,17 @@ export const Home = () => {
     setCurrentSession(data.sessionId);
   };
 
+  const handleDeleteSession = async (id: string) => {
+    if (!(accessToken && refreshToken)) return;
+    const res = await deleteSession(id, accessToken, refreshToken);
+    if (!res) {
+      // TODO:エラーハンドリング
+      return;
+    }
+    if (currentSession === id) setCurrentSession(null);
+    handleGetChatSessions();
+  };
+
   // 初回ロード時にセッション一覧を取得
   useEffect(() => {
     (async () => {
@@ -155,12 +167,14 @@ export const Home = () => {
   return (
     <Box display={"flex"} h={"100%"} color={"gray.600"}>
       <Sidebar
+        currentSession={currentSession}
         chats={sessions}
         onChatClick={(id) => setCurrentSession(id)}
         flex={1}
         maxW={300}
         display={{ base: "none", md: "flex" }}
         onStartNewChat={createNewSession}
+        onDeleteClick={handleDeleteSession}
       />
       <Box flex={4} h={"100%"}>
         <Chat

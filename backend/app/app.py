@@ -448,5 +448,23 @@ def get_session_messages(session_id):
     return jsonify({"status": "success", "messages": messages_response.data})
 
 
+@app.route("/api/sessions/<session_id>", methods=["DELETE"])
+def delete_session(session_id):
+    user_id = get_token_and_set_session(request.headers)
+
+    if not user_id:
+        return jsonify(
+            {"status": "error", "message": "ユーザー認証に失敗しました"}
+        ), 401
+
+    try:
+        supabase.table("messages").delete().eq("session_id", session_id).execute()
+        supabase.table("chat_sessions").delete().eq("id", session_id).execute()
+
+        return {"status": "success", "message": "セッションの削除に成功しました"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
+
 if __name__ == "__main__":
     app.run(debug=True)
