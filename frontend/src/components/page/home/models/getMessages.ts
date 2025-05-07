@@ -14,8 +14,19 @@ export const getMessages = async (
       },
     });
 
+    const fileData = response.data.file_data;
+
     return {
       messagesHistory: response.data.messages,
+      file: {
+        uploadedFile: {
+          name: fileData.uploaded_file_name,
+        },
+        translatedFile: {
+          name: fileData.translated_file_name,
+          link: fileData.file_url,
+        },
+      },
     };
   } catch (error) {
     if (isAxiosError(error)) {

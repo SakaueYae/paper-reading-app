@@ -2,11 +2,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Flex, VStack } from "@chakra-ui/react";
 import { SpeechBubble } from "@/components/ui/SpeechBubble";
 import { ChatBox } from "@/components/ui/ChatBox";
-import { FileChatContent, FileMessageList } from "./FileChatContent";
+import { FileChatContent, FileNameList } from "./FileChatContent";
 
 export interface Message {
   messagesHistory: MessageData[];
-  file?: FileMessageList;
+  file?: FileNameList;
 }
 
 interface MessageData {
@@ -29,12 +29,13 @@ export const ChatContent = ({ name, messages }: ChatContentProps) => {
       )}
       {messages.messagesHistory.map(({ id, content, role }, i) => (
         <>
-          {role === "user" ? (
+          {role === "user" && (
             <Flex justifyContent={"end"} gap={8} w={"100%"}>
               <SpeechBubble message={content} />
               <Avatar name={name} />
             </Flex>
-          ) : role === "assistant" ? (
+          )}
+          {role === "assistant" && (
             <Flex justifyContent={"start"} gap={8} w={"100%"}>
               <Avatar />
               <VStack alignItems={"start"}>
@@ -46,8 +47,6 @@ export const ChatContent = ({ name, messages }: ChatContentProps) => {
                 )}
               </VStack>
             </Flex>
-          ) : (
-            <div></div>
           )}
         </>
       ))}

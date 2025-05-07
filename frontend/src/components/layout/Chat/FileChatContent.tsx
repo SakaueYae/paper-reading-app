@@ -4,19 +4,14 @@ import { SpeechBubble } from "@/components/ui/SpeechBubble";
 import { ChatBox } from "@/components/ui/ChatBox";
 import { FileData } from "@/components/ui/PDFIcon";
 
-type FileMessage = {
-  id: string;
-  file: FileData;
-};
-
-export type FileMessageList = {
-  sentMessage: FileMessage;
-  contents: FileMessage;
+export type FileNameList = {
+  uploadedFile: FileData;
+  translatedFile: FileData;
 };
 
 type ChatContentProps = {
   name: string;
-  messages: FileMessageList;
+  messages: FileNameList;
 };
 
 const fileUploadText =
@@ -26,13 +21,13 @@ export const FileChatContent = ({ name, messages }: ChatContentProps) => {
   return (
     <Box mb={8}>
       <Flex justifyContent={"end"} gap={8}>
-        <SpeechBubble file={messages.sentMessage.file} />
+        <SpeechBubble file={messages.uploadedFile} />
         <Avatar name={name} />
       </Flex>
       <Flex justifyContent={"start"} gap={8}>
         <Avatar />
         <VStack alignItems={"start"}>
-          <SpeechBubble isLeft file={messages.contents.file} />
+          <SpeechBubble isLeft file={messages.translatedFile} />
           <ChatBox message={fileUploadText} />
         </VStack>
       </Flex>

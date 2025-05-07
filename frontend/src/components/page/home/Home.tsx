@@ -124,8 +124,6 @@ export const Home = () => {
     const data = await uploadFile(file, accessToken, refreshToken);
     setIsLoading(false);
     if (typeof data === "string") return;
-    // setMessages((prev) => ({ ...prev, file: data.fileMessageList }));
-    // setCurrentSession(data.sessionId);
     navigate(`/${data.sessionId}`);
   };
 

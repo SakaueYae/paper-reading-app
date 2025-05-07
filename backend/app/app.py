@@ -307,7 +307,7 @@ def upload_pdf():
         session_id = session["id"]
         (
             supabase.table("chat_sessions")
-            .update({"document_text": file_text})
+            .update({"document_text": file_text, "file_name": file.name})
             .eq("id", session_id)
             .execute()
         )
@@ -445,7 +445,28 @@ def get_session_messages(session_id):
         .execute()
     )
 
-    return jsonify({"status": "success", "messages": messages_response.data})
+    # メッセージの1つ目はアップロードしたファイル名、2つ目は翻訳後のファイル名に必ずなっている
+    uploaded_file_name = messages_response.data[0]["content"]
+    translated_file_name = messages_response.data[1]["content"]
+
+    print(uploaded_file_name, translated_file_name)
+
+    if translated_file_name:
+        file_url = supabase.storage.from_("file").create_signed_url(
+            path=f"{user_id}/{translated_file_name}", expires_in=300
+        )
+
+    return jsonify(
+        {
+            "status": "success",
+            "messages": messages_response.data,
+            "file_data": {
+                "uploaded_file_name": uploaded_file_name,
+                "translated_file_name": translated_file_name,
+                "file_url": file_url["signedUrl"],
+            },
+        }
+    )
 
 
 @app.route("/api/sessions/<session_id>", methods=["DELETE"])

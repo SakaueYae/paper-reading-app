@@ -1,5 +1,4 @@
 import axios, { isAxiosError } from "axios";
-import { FileMessageList } from "@/components/layout/Chat/FileChatContent";
 
 export const uploadFile = async (
   file: File,
@@ -17,25 +16,9 @@ export const uploadFile = async (
       },
     });
 
-    const fileMessageList: FileMessageList = {
-      sentMessage: {
-        id: "file",
-        file: {
-          name: file.name,
-        },
-      },
-      contents: {
-        id: "upload",
-        file: {
-          name: res.data.file_name,
-          link: res.data.download_url,
-        },
-      },
-    };
-
     const sessionId = res.data.session_id;
 
-    return { fileMessageList, sessionId };
+    return { sessionId };
   } catch (e) {
     if (isAxiosError(e)) return e.message;
     else return "エラーが発生しました。";
