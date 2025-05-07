@@ -19,6 +19,14 @@ function App() {
         }
       />
       <Route
+        path="/:session_id"
+        element={
+          <AuthGuard>
+            <Home />
+          </AuthGuard>
+        }
+      />
+      <Route
         path="mypage"
         element={
           <AuthGuard>

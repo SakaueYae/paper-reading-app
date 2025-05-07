@@ -11,6 +11,8 @@ import { getMessages } from "./models/getMessages";
 import { Message } from "@/components/layout/Chat/ChatContent";
 import { sendMessage } from "./models/sendMessage";
 import { deleteSession } from "./models/deleteSession";
+import { useNavigate, useParams } from "react-router";
+import { DefaultChat } from "@/components/layout/Chat/DefaultChat";
 
 export interface ChatSession {
   id: string;
@@ -26,11 +28,13 @@ const defaultValue: Message = {
 export const Home = () => {
   const [messages, setMessages] = useState<Message>(defaultValue);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSession, setCurrentSession] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   // const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toggleColorMode } = useColorMode();
   const { user, accessToken, refreshToken, signOut } = useAuthContext();
+  const { session_id } = useParams();
+  console.log(session_id);
+  const navigate = useNavigate();
 
   const handleGetChatSessions = async () => {
     if (!(accessToken && refreshToken)) return;
@@ -71,16 +75,16 @@ export const Home = () => {
 
       const sessionId = await sendMessage(
         userMessage.messagesHistory[0].content,
-        currentSession,
+        session_id ?? null,
         accessToken,
         refreshToken
       );
 
       if (sessionId) {
         // 新しいセッションの場合、セッションIDを更新
-        if (!currentSession) {
-          setCurrentSession(sessionId);
-          handleGetChatSessions(); // セッション一覧を更新
+        if (!session_id) {
+          navigate(`/${sessionId}`);
+          // handleGetChatSessions(); // セッション一覧を更新
         }
 
         console.log(sessionId);
@@ -110,8 +114,8 @@ export const Home = () => {
 
   // 新しいセッションを作成
   const createNewSession = () => {
-    setCurrentSession(null);
-    setMessages(defaultValue);
+    navigate("/");
+    // setMessages(defaultValue);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -120,8 +124,9 @@ export const Home = () => {
     const data = await uploadFile(file, accessToken, refreshToken);
     setIsLoading(false);
     if (typeof data === "string") return;
-    setMessages((prev) => ({ ...prev, file: data.fileMessageList }));
-    setCurrentSession(data.sessionId);
+    // setMessages((prev) => ({ ...prev, file: data.fileMessageList }));
+    // setCurrentSession(data.sessionId);
+    navigate(`/${data.sessionId}`);
   };
 
   const handleDeleteSession = async (id: string) => {
@@ -131,7 +136,7 @@ export const Home = () => {
       // TODO:エラーハンドリング
       return;
     }
-    if (currentSession === id) setCurrentSession(null);
+    if (session_id === id) navigate("/");
     handleGetChatSessions();
   };
 
@@ -139,18 +144,9 @@ export const Home = () => {
   useEffect(() => {
     (async () => {
       handleGetChatSessions();
+      if (session_id) handleGetMessages(session_id);
     })();
-  }, [user, accessToken]);
-
-  useEffect(() => {
-    (async () => {
-      if (currentSession) {
-        handleGetMessages(currentSession);
-      } else {
-        setMessages(defaultValue);
-      }
-    })();
-  }, [currentSession]);
+  }, [session_id, user, accessToken]);
 
   useEffect(() => {
     (async () => {
@@ -167,26 +163,40 @@ export const Home = () => {
   return (
     <Box display={"flex"} h={"100%"} color={"gray.600"}>
       <Sidebar
-        currentSession={currentSession}
+        currentSession={session_id ?? null}
         chats={sessions}
-        onChatClick={(id) => setCurrentSession(id)}
+        onChatClick={(id) => navigate(`/${id}`)}
         flex={1}
         maxW={300}
-        display={{ base: "none", md: "flex" }}
+        hideBelow={"md"}
+        display={"flex"}
         onStartNewChat={createNewSession}
         onDeleteClick={handleDeleteSession}
       />
       <Box flex={4} h={"100%"}>
-        <Chat
-          isLoading={isLoading}
-          onSubmit={handleSendMessage}
-          onFileUpload={handleFileUpload}
-          signOut={signOut}
-          messages={messages}
-          chats={sessions}
-          onStartNewChat={createNewSession}
-          onChatClick={(id) => setCurrentSession(id)}
-        />
+        {session_id ? (
+          <Chat
+            onSubmit={handleSendMessage}
+            signOut={signOut}
+            messages={messages}
+            chats={sessions}
+            currentSession={session_id ?? null}
+            onStartNewChat={createNewSession}
+            onChatClick={(id) => navigate(`/${id}`)}
+            onDeleteClick={handleDeleteSession}
+          />
+        ) : (
+          <DefaultChat
+            isLoading={isLoading}
+            onFileUpload={handleFileUpload}
+            chats={sessions}
+            currentSession={session_id ?? null}
+            onStartNewChat={createNewSession}
+            onChatClick={(id) => navigate(`/${id}`)}
+            signOut={signOut}
+            onDeleteClick={handleDeleteSession}
+          />
+        )}
       </Box>
 
       {/* Home

@@ -11,14 +11,15 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Modal } from "@/components/ui/Modal";
 import { useState } from "react";
 import { ChatSession } from "@/components/page/home/Home";
+import { SidebarProps } from "../Sidebar";
 
-type ChatHeaderProps = {
+interface ChatHeaderProps extends SidebarProps {
   name: string;
   chats: ChatSession[];
   signOut: () => void;
   onStartNewChat: () => void;
   onChatClick: (id: string) => void;
-};
+}
 
 const initialState = {
   isOpen: false,
@@ -28,9 +29,11 @@ const initialState = {
 export const ChatHeader = ({
   name,
   chats,
+  currentSession,
   signOut,
   onStartNewChat,
   onChatClick,
+  onDeleteClick,
 }: ChatHeaderProps) => {
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -52,12 +55,16 @@ export const ChatHeader = ({
 
   return (
     <HStack justifyContent={"space-between"}>
-      <Drawer
-        chats={chats}
-        onChatClick={onChatClick}
-        display={{ md: "none" }}
-        onStartNewChat={onStartNewChat}
-      />
+      <Box visibility={{ md: "hidden" }}>
+        <Drawer
+          currentSession={currentSession}
+          chats={chats}
+          onChatClick={onChatClick}
+          onStartNewChat={onStartNewChat}
+          onDeleteClick={onDeleteClick}
+        />
+      </Box>
+
       <HStack justifyContent={"end"}>
         <Box>
           <MenuRoot

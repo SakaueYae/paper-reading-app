@@ -459,9 +459,9 @@ def delete_session(session_id):
 
     try:
         supabase.table("messages").delete().eq("session_id", session_id).execute()
-        supabase.table("chat_sessions").delete().eq("id", session_id).execute()
+        res = supabase.table("chat_sessions").delete().eq("id", session_id).execute()
 
-        return {"status": "success", "message": "セッションの削除に成功しました"}
+        return {"status": "success", "message": res.data}
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500
 

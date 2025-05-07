@@ -1,21 +1,18 @@
-import {
-  Drawer as ChakraDrawer,
-  Icon,
-  DrawerRootProps,
-} from "@chakra-ui/react";
+import { Drawer as ChakraDrawer, Icon } from "@chakra-ui/react";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Portal } from "@chakra-ui/react";
 import { Sidebar, SidebarProps } from "../layout/Sidebar";
 import { FC } from "react";
 
-export const Drawer: FC<SidebarProps & DrawerRootProps> = ({
+export const Drawer: FC<SidebarProps> = ({
+  currentSession,
   chats,
   onChatClick,
   onStartNewChat,
-  ...props
+  onDeleteClick,
 }) => {
   return (
-    <ChakraDrawer.Root placement={"start"} {...props}>
+    <ChakraDrawer.Root placement={"start"}>
       <ChakraDrawer.Trigger asChild>
         <Icon size={"xl"} visibility={{ md: "hidden" }}>
           <RxHamburgerMenu />
@@ -26,9 +23,11 @@ export const Drawer: FC<SidebarProps & DrawerRootProps> = ({
         <ChakraDrawer.Positioner>
           <ChakraDrawer.Content>
             <Sidebar
+              currentSession={currentSession}
               chats={chats}
               onChatClick={onChatClick}
               onStartNewChat={onStartNewChat}
+              onDeleteClick={onDeleteClick}
             />
           </ChakraDrawer.Content>
         </ChakraDrawer.Positioner>
