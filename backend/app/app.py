@@ -306,18 +306,23 @@ def upload_pdf():
         session = get_or_create_chat_session(user_id, session_id=None, title=file_name)
         session_id = session["id"]
         (
+            # 翻訳前と後のファイル名を保存
             supabase.table("chat_sessions")
-            .update({"document_text": file_text, "file_name": file.name})
+            .update(
+                {
+                    "document_text": file_text,
+                    "uploaded_file_name": file_name,
+                    "translated_file_name": file.name,
+                }
+            )
             .eq("id", session_id)
             .execute()
         )
 
         # Supabaseへファイル名と決まり文句を保存
-        save_message(session_id, file.name, "user")
-        save_message(session_id, unique_name, "assistant")
         save_message(
             session_id,
-            "上記のアイコンをクリックすると、翻訳ファイルをダウンロードできます。（有効期限5分）\n続けてファイル内容についての質問があればテキストボックスに入力して送信してください。",
+            "上記のアイコンをクリックすると、翻訳ファイルをダウンロードできます。セキュリティ保護のため、AIが提供するファイルダウンロードリンクは生成から5分後に期限切れとなります。期限切れ後にファイルが必要な場合は、チャットを更新するか再度リクエストしてください。<br />続けてファイル内容についての質問があればテキストボックスに入力して送信してください。",
             "assistant",
         )
 
@@ -445,16 +450,27 @@ def get_session_messages(session_id):
         .execute()
     )
 
-    # メッセージの1つ目はアップロードしたファイル名、2つ目は翻訳後のファイル名に必ずなっている
-    uploaded_file_name = messages_response.data[0]["content"]
-    translated_file_name = messages_response.data[1]["content"]
+    # ファイル名取得
+    res = (
+        supabase.table("chat_sessions")
+        .select("uploaded_file_name", "translated_file_name")
+        .eq("id", session_id)
+        .execute()
+    )
+
+    print(res)
+
+    # # メッセージの1つ目はアップロードしたファイル名、2つ目は翻訳後のファイル名に必ずなっている
+    uploaded_file_name = res.data[0]["uploaded_file_name"]
+    translated_file_name = res.data[0]["translated_file_name"]
 
     print(uploaded_file_name, translated_file_name)
 
+    file_url = None
     if translated_file_name:
         file_url = supabase.storage.from_("file").create_signed_url(
             path=f"{user_id}/{translated_file_name}", expires_in=300
-        )
+        )["signedUrl"]
 
     return jsonify(
         {
@@ -463,7 +479,7 @@ def get_session_messages(session_id):
             "file_data": {
                 "uploaded_file_name": uploaded_file_name,
                 "translated_file_name": translated_file_name,
-                "file_url": file_url["signedUrl"],
+                "file_url": file_url,
             },
         }
     )

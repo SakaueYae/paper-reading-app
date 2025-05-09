@@ -22,6 +22,7 @@ type ChatContentProps = {
 };
 
 export const ChatContent = ({ name, messages }: ChatContentProps) => {
+  console.log(messages);
   return (
     <VStack gap={4}>
       {messages.file && (
@@ -40,7 +41,8 @@ export const ChatContent = ({ name, messages }: ChatContentProps) => {
               <Avatar />
               <VStack alignItems={"start"}>
                 {/* 連続してAIのチャットが続いているかどうかの判定 */}
-                {messages.messagesHistory[i - 1].role !== "assistant" ? (
+                {i !== 0 &&
+                messages.messagesHistory[i - 1].role !== "assistant" ? (
                   <SpeechBubble key={id} message={content} isLeft />
                 ) : (
                   <ChatBox message={content} />
