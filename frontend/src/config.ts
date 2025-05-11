@@ -1,2 +1,1 @@
-export const API_URL =
-  process.env.NODE_ENV === "development" ? "" : process.env.VITE_API_URL || "";
+export const API_URL = process.env.VITE_API_URL!;

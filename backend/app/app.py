@@ -34,13 +34,22 @@ GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
+CORS(app)
 
-if os.getenv("FLASK_ENV") == "development":
-    allowed_origins = os.getenv("ALLOWED_ORIGINS_DEV", "").split(",")
-else:
-    allowed_origins = os.getenv("ALLOWED_ORIGINS_PROD", "").split(",")
 
-CORS(app, origins=allowed_origins)
+# if os.getenv("FLASK_ENV") == "development":
+#     allowed_origins = os.getenv("ALLOWED_ORIGINS_DEV", "").split(",")
+# else:
+#     allowed_origins = os.getenv("ALLOWED_ORIGINS_PROD", "").split(",")
+
+
+# CORS(
+#     app,
+#     origins=allowed_origins,
+#     supports_credentials=True,
+#     allow_headers=["Content-Type", "Authorization", "X-Refresh-Token"],
+#     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+# )
 
 
 @app.route("/")
