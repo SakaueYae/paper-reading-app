@@ -323,7 +323,7 @@ def upload_pdf():
                 {
                     "document_text": file_text,
                     "uploaded_file_name": file_name,
-                    "translated_file_name": file.name,
+                    "translated_file_name": unique_name,
                 }
             )
             .eq("id", session_id)
