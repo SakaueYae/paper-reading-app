@@ -1,30 +1,25 @@
 import base64
 import datetime
 import json
-import time
 import uuid
 from flask import Flask, jsonify, request
 from langchain_text_splitters import CharacterTextSplitter
 import pymupdf
 from langchain_community.document_loaders import PyMuPDFLoader
-import pymupdf4llm
 from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import os
-import tempfile
-import platform
 
 # from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain, create_retrieval_chain
-from langchain.schema import Document
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_community.chat_models import ChatOpenAI
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.combine_documents import create_stuff_documents_chain
+from flask_cors import CORS
 
 # .env ファイルから環境変数を読み込み
 load_dotenv()
@@ -39,6 +34,13 @@ GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
+
+if os.getenv("FLASK_ENV") == "development":
+    allowed_origins = os.getenv("ALLOWED_ORIGINS_DEV", "").split(",")
+else:
+    allowed_origins = os.getenv("ALLOWED_ORIGINS_PROD", "").split(",")
+
+CORS(app, origins=allowed_origins)
 
 
 @app.route("/")

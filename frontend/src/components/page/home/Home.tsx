@@ -1,4 +1,4 @@
-import { useColorMode } from "@/components/ui/chakraui/color-mode";
+// import { useColorMode } from "@/components/ui/chakraui/color-mode";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Box } from "@chakra-ui/react";
 import { Chat } from "@/components/layout/Chat/Chat";
@@ -29,8 +29,7 @@ export const Home = () => {
   const [messages, setMessages] = useState<Message>(defaultValue);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  // const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toggleColorMode } = useColorMode();
+  // const { toggleColorMode } = useColorMode();
   const { user, accessToken, refreshToken, signOut } = useAuthContext();
   const { session_id } = useParams();
   console.log(session_id);
