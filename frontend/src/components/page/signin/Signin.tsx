@@ -21,7 +21,7 @@ export const Signin = ({ type }: { type: FormType }) => {
       } else {
         await signUp(email, password);
       }
-    } catch (e) {
+    } catch {
       setError("エラーが発生しました。");
     }
   };

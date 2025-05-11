@@ -1,3 +1,4 @@
+import { API_URL } from "@/config";
 import axios from "axios";
 
 export const sendMessage = async (
@@ -8,7 +9,7 @@ export const sendMessage = async (
 ) => {
   try {
     const response = await axios.post(
-      "/api/chat",
+      `${API_URL}/api/chat`,
       {
         message,
         session_id,

@@ -1,4 +1,5 @@
 import { Message } from "@/components/layout/Chat/ChatContent";
+import { API_URL } from "@/config";
 import axios, { isAxiosError } from "axios";
 
 export const getMessages = async (
@@ -7,12 +8,15 @@ export const getMessages = async (
   refreshToken: string
 ): Promise<Message | string> => {
   try {
-    const response = await axios.get(`/api/sessions/${sessionId}/messages`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "X-Refresh-Token": refreshToken,
-      },
-    });
+    const response = await axios.get(
+      `${API_URL}/api/sessions/${sessionId}/messages`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "X-Refresh-Token": refreshToken,
+        },
+      }
+    );
 
     const fileData = response.data.file_data;
 

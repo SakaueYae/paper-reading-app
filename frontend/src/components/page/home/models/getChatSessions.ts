@@ -1,12 +1,13 @@
 import axios from "axios";
 import { ChatSession } from "../Home";
+import { API_URL } from "@/config";
 
 export const getChatSessions = async (
   accessToken: string,
   refreshToken: string
 ): Promise<ChatSession[] | null> => {
   try {
-    const response = await axios.get("/api/sessions", {
+    const response = await axios.get(`${API_URL}/api/sessions`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "X-Refresh-Token": refreshToken,

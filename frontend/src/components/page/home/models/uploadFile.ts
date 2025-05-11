@@ -1,3 +1,4 @@
+import { API_URL } from "@/config";
 import axios, { isAxiosError } from "axios";
 
 export const uploadFile = async (
@@ -8,7 +9,7 @@ export const uploadFile = async (
   try {
     const formData = new FormData();
     formData.append(file.name, file);
-    const res = await axios.post("/api/pdf", formData, {
+    const res = await axios.post(`${API_URL}/api/pdf`, formData, {
       headers: {
         "content-type": "multipart/form-data",
         Authorization: `Bearer ${accessToken}`,
