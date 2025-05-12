@@ -1,0 +1,63 @@
+# Cloud Run用に.dockerignoreファイルを作成します
+# 不要なファイルをDockerビルドコンテキストから除外することで
+# ビルド時間を短縮し、イメージサイズを小さくします
+
+# Git関連
+.git
+.gitignore
+.github
+
+# 仮想環境
+venv
+env
+.env
+.env.local
+.env.*.local
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ログファイル
+*.log
+
+# 一時ファイル
+*.swp
+*.swo
+.DS_Store
+
+# テスト関連
+tests/
+test/
+htmlcov/
+.coverage
+.pytest_cache/
+.tox/
+
+# ドキュメント
+docs/
+*.md
+!README.md
+
+# デバッグ用ファイル
+.vscode/
+.idea/
+
+# Dockerfileは含める必要があります
+# .dockerignore は自身を無視します
