@@ -32,7 +32,6 @@ export const Home = () => {
   // const { toggleColorMode } = useColorMode();
   const { user, accessToken, refreshToken, signOut } = useAuthContext();
   const { session_id } = useParams();
-  console.log(session_id);
   const navigate = useNavigate();
 
   const handleGetChatSessions = async () => {
@@ -85,8 +84,6 @@ export const Home = () => {
           navigate(`/${sessionId}`);
           // handleGetChatSessions(); // セッション一覧を更新
         }
-
-        console.log(sessionId);
 
         // サーバーから最新のメッセージを取得
         handleGetMessages(sessionId);

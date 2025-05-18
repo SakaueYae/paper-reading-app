@@ -62,7 +62,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_, session) => {
       setSession(session);
-      console.log(session?.user);
       setUser(session?.user ?? null);
       setAccessToken(session?.access_token ?? null);
       setRefreshToken(session?.refresh_token ?? null);
