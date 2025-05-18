@@ -20,6 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 環境変数の設定
+ENV PYTHONPATH=/app
 ENV FLASK_APP=app/app.py
 
 # ポート8080を公開 (Cloud Runの推奨ポート)
