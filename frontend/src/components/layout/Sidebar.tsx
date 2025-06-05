@@ -6,6 +6,7 @@ import { FC, useState } from "react";
 import { ChatSession } from "../page/home/Home";
 import { ChatList } from "../ui/ChatList";
 import { Modal } from "../ui/Modal";
+import { useColorModeValue } from "../ui/chakraui/color-mode";
 
 export type SidebarProps = {
   currentSession: string | null;
@@ -28,6 +29,10 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
   onDeleteClick,
   ...props
 }) => {
+  const bgColor = useColorModeValue("gray.100", "gray.800");
+  const textColor = useColorModeValue("gray.600", "white");
+  const hoverColor = useColorModeValue("gray.200", "gray.700");
+
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     resolve: (ok: boolean) => void;
@@ -48,11 +53,12 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
     <Box
       as="nav"
       h={"100%"}
-      bg={"gray.100"}
+      bg={bgColor}
       px={3}
       py={8}
       display={"flex"}
       flexDir={"column"}
+      color={textColor}
       {...props}
     >
       <Logo type="sidebar" />
@@ -75,7 +81,7 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
         w={"100%"}
         size={"lg"}
         _hover={{
-          bgColor: "gray.200",
+          bgColor: hoverColor,
         }}
         onClick={onStartNewChat}
       >

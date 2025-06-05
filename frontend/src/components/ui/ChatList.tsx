@@ -1,5 +1,6 @@
 import { Box, Heading, IconButton, Text, HStack } from "@chakra-ui/react";
 import { MdDelete } from "react-icons/md";
+import { useColorModeValue } from "./chakraui/color-mode";
 
 interface ChatListProps {
   isSelected?: boolean;
@@ -16,6 +17,8 @@ export const ChatList = ({
   onChatClick,
   onDeleteClick,
 }: ChatListProps) => {
+  const hoverColor = useColorModeValue("gray.200", "gray.700");
+
   return (
     <Box
       borderRadius={"10px"}
@@ -23,9 +26,9 @@ export const ChatList = ({
       p={2}
       cursor={"pointer"}
       _hover={{
-        bgColor: "gray.200",
+        bgColor: hoverColor,
       }}
-      bgColor={isSelected ? "gray.200" : "inherit"}
+      bgColor={isSelected ? hoverColor : "inherit"}
       onClick={onChatClick}
       position={"relative"}
       className="group"
