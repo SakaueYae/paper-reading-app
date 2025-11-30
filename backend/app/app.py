@@ -199,7 +199,7 @@ def build_chain(text: str, memory: ConversationBufferMemory):
 
     # Load embeddings model
     embeddings = GoogleGenerativeAIEmbeddings(
-        google_api_key=GOOGLE_API_KEY, model="models/embedding-001"
+        google_api_key=GOOGLE_API_KEY, model="models/gemini-embedding-001"
     )
     # PDFファイルのテキストを注入して疑似的にファイル検索を行う
     pdf_search = FAISS.from_texts(
