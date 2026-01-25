@@ -195,7 +195,7 @@ def build_chain(text: str, memory: ConversationBufferMemory):
         chunk_overlap=0,
     )
     doc = char_text_splitter.split_text(text)
-    print(doc)
+    # print(doc)
 
     # Load embeddings model
     embeddings = GoogleGenerativeAIEmbeddings(
@@ -221,9 +221,11 @@ def build_chain(text: str, memory: ConversationBufferMemory):
 
     llm = ChatGoogleGenerativeAI(
         temperature=0.7,
-        model="gemini-2.0-flash-001",  # または使用したいモデル
+        # 2026年6月17日に提供終了
+        # https://ai.google.dev/gemini-api/docs/deprecations?hl=ja
+        model="gemini-2.5-flash",
         google_api_key=GOOGLE_API_KEY,
-    )  # または使用したいモデル
+    )
 
     history_aware_retriever = create_history_aware_retriever(
         llm,
@@ -374,40 +376,72 @@ def chat():
             {"status": "error", "message": "ユーザー認証に失敗しました"}
         ), 401
 
-    # セッションを取得または作成
-    session = get_or_create_chat_session(user_id, session_id)
-    session_id = session["id"]
+    try:
+        # セッションを取得または作成
+        session = get_or_create_chat_session(user_id, session_id)
+        session_id = session["id"]
 
-    # ユーザーメッセージを保存
-    save_message(session_id, message, "user")
+        # ユーザーメッセージを保存
+        save_message(session_id, message, "user")
 
-    # セッションの履歴を取得
-    chat_history = get_chat_history(session_id)
+        # セッションの履歴を取得
+        chat_history = get_chat_history(session_id)
 
-    # LangChainのメモリを初期化
-    memory = initialize_memory_from_history(chat_history)
+        # LangChainのメモリを初期化
+        memory = initialize_memory_from_history(chat_history)
 
-    pdf_text = get_pdf_text(session_id)
+        pdf_text = get_pdf_text(session_id)
 
-    if not pdf_text:
+        if not pdf_text:
+            return jsonify(
+                {"status": "error", "message": "PDFがアップロードされていません"}
+            ), 400
+
+        pdf_chat = build_chain(pdf_text, memory)
+        # AIの応答を生成
+        result = pdf_chat.invoke(
+            {"input": message, "chat_history": memory.chat_memory.messages}
+        )
+
+        # AIの応答を保存
+        save_message(session_id, result["answer"], "assistant")
+        # print(f"AI response: {result['answer']}")
+
         return jsonify(
-            {"status": "error", "message": "PDFがアップロードされていません"}
-        ), 400
+            {"status": "success", "response": result["answer"], "session_id": session_id}
+        )
+    except Exception as e:
+        # エラーの詳細をログに出力
+        error_type = type(e).__name__
+        error_module = type(e).__module__
+        error_message = str(e)
 
-    pdf_chat = build_chain(pdf_text, memory)
-    # AIの応答を生成
-    result = pdf_chat.invoke(
-        {"input": message, "chat_history": memory.chat_memory.messages}
-    )
+        # Google API のクォータエラー（429）の場合
+        if "ResourceExhausted" in error_type or "429" in error_message:
+            return jsonify({
+                "status": "error",
+                "error_type": "quota_exceeded",
+                "message": "APIの利用制限に達しました。しばらく待ってから再度お試しください。",
+                "details": error_message
+            }), 429
 
-    # AIの応答を保存
-    save_message(session_id, result["answer"], "assistant")
-    print(f"AI response: {result['answer']}")
+        # その他のGoogle APIエラー
+        elif "google.api_core.exceptions" in error_module:
+            return jsonify({
+                "status": "error",
+                "error_type": "api_error",
+                "message": f"AI APIでエラーが発生しました: {error_type}",
+                "details": error_message
+            }), 500
 
-    return jsonify(
-        {"status": "success", "response": result["answer"], "session_id": session_id}
-    )
-
+        # その他の一般的なエラー（データベースエラーなど）
+        else:
+            return jsonify({
+                "status": "error",
+                "error_type": "internal_error",
+                "message": f"サーバー内部エラーが発生しました: {error_type}",
+                "details": error_message
+            }), 500
 
 @app.route("/api/sessions", methods=["GET"])
 def get_sessions():
@@ -469,13 +503,13 @@ def get_session_messages(session_id):
         .execute()
     )
 
-    print(res)
+    # print(res)
 
     # # メッセージの1つ目はアップロードしたファイル名、2つ目は翻訳後のファイル名に必ずなっている
     uploaded_file_name = res.data[0]["uploaded_file_name"]
     translated_file_name = res.data[0]["translated_file_name"]
 
-    print(uploaded_file_name, translated_file_name)
+    # print(uploaded_file_name, translated_file_name)
 
     file_url = None
     if translated_file_name:
