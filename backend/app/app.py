@@ -288,6 +288,8 @@ def upload_pdf():
                 text = block[4]
                 ja = ""
                 i = 0
+                # 改行を消すことで翻訳精度を向上
+                text = text.replace("\n", " ").replace("\r", " ")
                 file_text += text
                 if len(text) >= 5000:
                     while i < len(text):
