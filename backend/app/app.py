@@ -238,7 +238,7 @@ def build_chain(text: str, memory: ConversationBufferMemory):
         [
             (
                 "system",
-                "Answer the user's question based on the following context:\n\n{context}",
+                "Answer the user's question based on the following context. Use Markdown formatting in your response.\n\nContext:\n\n{context}",
             ),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
@@ -337,7 +337,7 @@ def upload_pdf():
         # Supabaseへファイル名と決まり文句を保存
         save_message(
             session_id,
-            "上記のアイコンをクリックすると、翻訳ファイルをダウンロードできます。セキュリティ保護のため、AIが提供するファイルダウンロードリンクは生成から5分後に期限切れとなります。期限切れ後にファイルが必要な場合は、チャットを更新するか再度リクエストしてください。<br />続けてファイル内容についての質問があればテキストボックスに入力して送信してください。",
+            "上記のアイコンをクリックすると、翻訳ファイルをダウンロードできます。セキュリティ保護のため、AIが提供するファイルダウンロードリンクは生成から5分後に期限切れとなります。期限切れ後にファイルが必要な場合は、チャットを更新するか再度リクエストしてください。\n\n続けてファイル内容についての質問があればテキストボックスに入力して送信してください。",
             "assistant",
         )
 

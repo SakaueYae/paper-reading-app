@@ -71,10 +71,7 @@ export const Chat: FC<ChatProps> = ({
             }
             w={"100%"}
           >
-            <Input
-              placeholder="Input something to ask or upload pdf file"
-              ref={ref}
-            />
+            <Input placeholder="Ask a question about the PDF..." ref={ref} />
           </InputGroup>
         </Field>
       </Box>

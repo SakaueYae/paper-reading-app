@@ -22,8 +22,8 @@ type ChatContentProps = {
 };
 
 export const ChatContent = ({ name, messages }: ChatContentProps) => {
-  console.log(messages);
   return (
+    // チャット間のスペーシング
     <VStack gap={4}>
       {messages.file && (
         <FileChatContent name={name} messages={messages.file} />
@@ -38,16 +38,19 @@ export const ChatContent = ({ name, messages }: ChatContentProps) => {
           )}
           {role === "assistant" && (
             <Flex justifyContent={"start"} gap={8} w={"100%"}>
-              <Avatar />
-              <VStack alignItems={"start"}>
-                {/* 連続してAIのチャットが続いているかどうかの判定 */}
-                {i !== 0 &&
-                messages.messagesHistory[i - 1].role !== "assistant" ? (
+              {/* 連続してAIのチャットが続いているかどうかの判定 */}
+              {i !== 0 &&
+              messages.messagesHistory[i - 1].role !== "assistant" ? (
+                <>
+                  <Avatar />
                   <SpeechBubble key={id} message={content} isLeft />
-                ) : (
+                </>
+              ) : (
+                <>
+                  <Avatar visibility="hidden" />
                   <ChatBox message={content} />
-                )}
-              </VStack>
+                </>
+              )}
             </Flex>
           )}
         </>

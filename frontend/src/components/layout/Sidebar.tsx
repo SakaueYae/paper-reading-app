@@ -30,7 +30,6 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
   ...props
 }) => {
   const bgColor = useColorModeValue("gray.100", "gray.800");
-  const textColor = useColorModeValue("gray.600", "white");
   const hoverColor = useColorModeValue("gray.200", "gray.700");
 
   const [modalState, setModalState] = useState<{
@@ -58,11 +57,17 @@ export const Sidebar: FC<SidebarProps & BoxProps> = ({
       py={8}
       display={"flex"}
       flexDir={"column"}
-      color={textColor}
       {...props}
     >
       <Logo type="sidebar" />
-      <VStack gap={1} alignItems={"start"} mt={4} flex={1} overflow={"auto"}>
+      <VStack
+        gap={1}
+        alignItems={"start"}
+        mt={4}
+        mb={4}
+        flex={1}
+        overflow={"auto"}
+      >
         {chats.map(({ id, created_at, title }) => (
           <ChatList
             key={id}

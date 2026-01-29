@@ -1,6 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import { PDFIcon, FileData } from "./PDFIcon";
 import Markdown from "react-markdown";
+import { useColorModeValue } from "./chakraui/color-mode";
 
 type SpeechBubbleProps = {
   message?: string;
@@ -13,13 +14,15 @@ export const SpeechBubble = ({
   isLeft = false,
   file,
 }: SpeechBubbleProps) => {
+  const bgColor = useColorModeValue("gray.50", "gray.700");
+
   return (
     <Box
       borderRadius={"10px"}
       borderWidth={"1px"}
       borderColor={"gray.300"}
       p={2}
-      bg={"gray.50"}
+      bg={bgColor}
       pos={"relative"}
       _after={
         isLeft
@@ -29,7 +32,7 @@ export const SpeechBubble = ({
               top: 0,
               right: "calc(100% - 1px)",
               transform: "translate(0,50%)",
-              bg: "gray.50",
+              bg: bgColor,
               w: 5,
               h: 5,
               clipPath: "polygon(100% 0, 100% 100%, 0 50%)",
@@ -40,7 +43,7 @@ export const SpeechBubble = ({
               top: 0,
               left: "calc(100% - 1px)",
               transform: "translate(0,50%)",
-              bg: "gray.50",
+              bg: bgColor,
               w: 5,
               h: 5,
               clipPath: "polygon(0 0, 100% 50%, 0 100%)",

@@ -15,8 +15,8 @@ type ChatContentProps = {
 
 export const FileChatContent = ({ name, messages }: ChatContentProps) => {
   return (
-    <Box mb={8} w={"100%"}>
-      <Flex justifyContent={"end"} gap={8}>
+    <Box w={"100%"}>
+      <Flex justifyContent={"end"} gap={8} mb={4}>
         <SpeechBubble file={messages.uploadedFile} />
         <Avatar name={name} />
       </Flex>
