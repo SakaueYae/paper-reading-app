@@ -3,9 +3,7 @@ import datetime
 import json
 import uuid
 from flask import Flask, jsonify, request
-from langchain_text_splitters import CharacterTextSplitter
 import pymupdf
-from langchain_community.document_loaders import PyMuPDFLoader
 from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -15,7 +13,7 @@ import os
 from langchain.memory import ConversationBufferMemory
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain.vectorstores import FAISS
-from langchain.chains import ConversationalRetrievalChain, create_retrieval_chain
+from langchain.chains import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -308,14 +306,10 @@ def upload_pdf():
         # print(f"write took: {time.time() - start:.2f}s")
         # print(len(pdf_bytes))
 
-    # 現在の日時をタイムスタンプに変換（例: 20250412_143015）
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    # 拡張子を分ける
-    name_without_ext, ext = os.path.splitext(file_name)
-    # タイムスタンプ付きのファイル名を作成
-    unique_name = f"{name_without_ext}_{timestamp}_ja{ext}"
+    # ストレージキーにはASCII安全なUUIDを使用（日本語ファイル名によるエラーを回避）
+    storage_name = f"{uuid.uuid4().hex}_ja.pdf"
     # アップロード先のパスを指定
-    upload_path = f"{user_id}/{unique_name}"
+    upload_path = f"{user_id}/{storage_name}"
 
     try:
         session = get_or_create_chat_session(user_id, session_id=None, title=file_name)
@@ -327,7 +321,7 @@ def upload_pdf():
                 {
                     "document_text": file_text,
                     "uploaded_file_name": file_name,
-                    "translated_file_name": unique_name,
+                    "translated_file_name": storage_name,
                 }
             )
             .eq("id", session_id)
@@ -356,7 +350,7 @@ def upload_pdf():
         return {
             "status": "success",
             "download_url": signed_url,
-            "file_name": unique_name,
+            "file_name": storage_name,
             "session_id": session_id,
         }
 

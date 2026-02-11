@@ -8,9 +8,10 @@
       "name": "Python デバッガー: Flask",
       "type": "debugpy",
       "request": "launch",
+      "python": "${workspaceFolder}/backend/venv/bin/python",
       "module": "flask",
       "env": { "FLASK_APP": "backend/app/app.py", "FLASK_DEBUG": "1" },
-      "args": ["run", "--no-debugger", "--no-reload"],
+      "args": ["run", "--no-debugger"],
       "jinja": true,
       "autoStartBrowser": false
     },
