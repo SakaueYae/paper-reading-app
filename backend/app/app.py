@@ -3,6 +3,7 @@ import datetime
 import json
 import uuid
 from flask import Flask, jsonify, request
+from langchain_text_splitters import CharacterTextSplitter
 import pymupdf
 from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
@@ -221,7 +222,7 @@ def build_chain(text: str, memory: ConversationBufferMemory):
         temperature=0.7,
         # 2026年6月17日に提供終了
         # https://ai.google.dev/gemini-api/docs/deprecations?hl=ja
-        model="gemini-2.5-flash",
+        model="gemini-3-flash-preview",
         google_api_key=GOOGLE_API_KEY,
     )
 
